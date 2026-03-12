@@ -1,0 +1,23 @@
+[package]
+name = "oxidoc-highlight"
+version = "0.1.0"
+edition = "2024"
+license = "MIT OR Apache-2.0"
+description = "Lightweight syntax highlighting for documentation engines"
+
+[lib]
+crate-type = ["cdylib", "rlib"]
+
+[dependencies]
+wasm-bindgen = { version = "0.2", optional = true }
+
+[dev-dependencies]
+fluxbench = "0.1"
+
+[features]
+default = []
+wasm = ["wasm-bindgen"]
+
+[[bench]]
+name = "highlight"
+harness = false
