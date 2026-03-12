@@ -4,28 +4,113 @@ use crate::token::{Token, TokenKind};
 pub struct RustScanner;
 
 const KEYWORDS: &[&[u8]] = &[
-    b"as", b"async", b"await", b"break", b"const", b"continue", b"crate", b"dyn",
-    b"else", b"enum", b"extern", b"false", b"fn", b"for", b"if", b"impl", b"in",
-    b"let", b"loop", b"match", b"mod", b"move", b"mut", b"pub", b"ref", b"return",
-    b"static", b"struct", b"super", b"trait", b"true", b"type", b"unsafe", b"use",
-    b"where", b"while", b"yield", b"Self",
+    b"as",
+    b"async",
+    b"await",
+    b"break",
+    b"const",
+    b"continue",
+    b"crate",
+    b"dyn",
+    b"else",
+    b"enum",
+    b"extern",
+    b"false",
+    b"fn",
+    b"for",
+    b"if",
+    b"impl",
+    b"in",
+    b"let",
+    b"loop",
+    b"match",
+    b"mod",
+    b"move",
+    b"mut",
+    b"pub",
+    b"ref",
+    b"return",
+    b"static",
+    b"struct",
+    b"super",
+    b"trait",
+    b"true",
+    b"type",
+    b"unsafe",
+    b"use",
+    b"where",
+    b"while",
+    b"yield",
+    b"Self",
 ];
 
 const TYPE_KEYWORDS: &[&[u8]] = &[
-    b"i8", b"i16", b"i32", b"i64", b"i128", b"isize",
-    b"u8", b"u16", b"u32", b"u64", b"u128", b"usize",
-    b"f32", b"f64", b"bool", b"char", b"str",
-    b"String", b"Vec", b"Option", b"Result", b"Box", b"Rc", b"Arc",
-    b"HashMap", b"HashSet", b"BTreeMap", b"BTreeSet",
-    b"Cow", b"Pin", b"Cell", b"RefCell", b"Mutex", b"RwLock",
+    b"i8",
+    b"i16",
+    b"i32",
+    b"i64",
+    b"i128",
+    b"isize",
+    b"u8",
+    b"u16",
+    b"u32",
+    b"u64",
+    b"u128",
+    b"usize",
+    b"f32",
+    b"f64",
+    b"bool",
+    b"char",
+    b"str",
+    b"String",
+    b"Vec",
+    b"Option",
+    b"Result",
+    b"Box",
+    b"Rc",
+    b"Arc",
+    b"HashMap",
+    b"HashSet",
+    b"BTreeMap",
+    b"BTreeSet",
+    b"Cow",
+    b"Pin",
+    b"Cell",
+    b"RefCell",
+    b"Mutex",
+    b"RwLock",
 ];
 
 const BUILTINS: &[&[u8]] = &[
-    b"println", b"print", b"eprintln", b"eprint", b"format", b"write", b"writeln",
-    b"vec", b"todo", b"unimplemented", b"unreachable", b"panic", b"assert",
-    b"assert_eq", b"assert_ne", b"debug_assert", b"debug_assert_eq", b"debug_assert_ne",
-    b"cfg", b"include", b"include_str", b"include_bytes", b"env", b"concat", b"stringify",
-    b"file", b"line", b"column", b"module_path",
+    b"println",
+    b"print",
+    b"eprintln",
+    b"eprint",
+    b"format",
+    b"write",
+    b"writeln",
+    b"vec",
+    b"todo",
+    b"unimplemented",
+    b"unreachable",
+    b"panic",
+    b"assert",
+    b"assert_eq",
+    b"assert_ne",
+    b"debug_assert",
+    b"debug_assert_eq",
+    b"debug_assert_ne",
+    b"cfg",
+    b"include",
+    b"include_str",
+    b"include_bytes",
+    b"env",
+    b"concat",
+    b"stringify",
+    b"file",
+    b"line",
+    b"column",
+    b"module_path",
 ];
 
 fn at(b: &[u8], i: usize) -> u8 {
@@ -49,7 +134,8 @@ impl Scanner for RustScanner {
             }
 
             // Attributes: #[...] or #![...]
-            if c == b'#' && (at(b, i + 1) == b'[' || (at(b, i + 1) == b'!' && at(b, i + 2) == b'[')) {
+            if c == b'#' && (at(b, i + 1) == b'[' || (at(b, i + 1) == b'!' && at(b, i + 2) == b'['))
+            {
                 let start = i;
                 i += if at(b, i + 1) == b'!' { 3 } else { 2 };
                 let mut depth = 1u32;
@@ -61,14 +147,22 @@ impl Scanner for RustScanner {
                     }
                     i += 1;
                 }
-                tokens.push(Token { kind: TokenKind::Attr, start, end: i });
+                tokens.push(Token {
+                    kind: TokenKind::Attr,
+                    start,
+                    end: i,
+                });
                 prev_kind = Some(TokenKind::Attr);
                 continue;
             }
 
             // Comments
             if let Some(end) = scan_c_comment(b, i) {
-                tokens.push(Token { kind: TokenKind::Comment, start: i, end });
+                tokens.push(Token {
+                    kind: TokenKind::Comment,
+                    start: i,
+                    end,
+                });
                 prev_kind = Some(TokenKind::Comment);
                 i = end;
                 continue;
@@ -77,7 +171,11 @@ impl Scanner for RustScanner {
             // Raw strings: r"...", r#"..."#, r##"..."##, etc.
             if c == b'r' && (at(b, i + 1) == b'"' || at(b, i + 1) == b'#') {
                 if let Some(end) = scan_rust_raw_string(b, i) {
-                    tokens.push(Token { kind: TokenKind::String, start: i, end });
+                    tokens.push(Token {
+                        kind: TokenKind::String,
+                        start: i,
+                        end,
+                    });
                     prev_kind = Some(TokenKind::String);
                     i = end;
                     continue;
@@ -88,7 +186,11 @@ impl Scanner for RustScanner {
             if c == b'b' && (at(b, i + 1) == b'"' || at(b, i + 1) == b'\'') {
                 let delim = b[i + 1];
                 if let Some(end) = scan_quoted_string(b, i + 1, delim) {
-                    tokens.push(Token { kind: TokenKind::String, start: i, end });
+                    tokens.push(Token {
+                        kind: TokenKind::String,
+                        start: i,
+                        end,
+                    });
                     prev_kind = Some(TokenKind::String);
                     i = end;
                     continue;
@@ -98,7 +200,11 @@ impl Scanner for RustScanner {
             // Strings
             if c == b'"' {
                 if let Some(end) = scan_double_string(b, i) {
-                    tokens.push(Token { kind: TokenKind::String, start: i, end });
+                    tokens.push(Token {
+                        kind: TokenKind::String,
+                        start: i,
+                        end,
+                    });
                     prev_kind = Some(TokenKind::String);
                     i = end;
                     continue;
@@ -109,7 +215,11 @@ impl Scanner for RustScanner {
             if c == b'\'' {
                 if let Some(end) = scan_rust_char_or_lifetime(b, i) {
                     // It's a char literal
-                    tokens.push(Token { kind: TokenKind::String, start: i, end });
+                    tokens.push(Token {
+                        kind: TokenKind::String,
+                        start: i,
+                        end,
+                    });
                     prev_kind = Some(TokenKind::String);
                     i = end;
                     continue;
@@ -121,7 +231,11 @@ impl Scanner for RustScanner {
                     while i < b.len() && (b[i].is_ascii_alphanumeric() || b[i] == b'_') {
                         i += 1;
                     }
-                    tokens.push(Token { kind: TokenKind::Variable, start, end: i });
+                    tokens.push(Token {
+                        kind: TokenKind::Variable,
+                        start,
+                        end: i,
+                    });
                     prev_kind = Some(TokenKind::Variable);
                     continue;
                 }
@@ -129,7 +243,11 @@ impl Scanner for RustScanner {
 
             // Numbers
             if let Some(end) = scan_number(b, i) {
-                tokens.push(Token { kind: TokenKind::Number, start: i, end });
+                tokens.push(Token {
+                    kind: TokenKind::Number,
+                    start: i,
+                    end,
+                });
                 prev_kind = Some(TokenKind::Number);
                 i = end;
                 continue;
@@ -150,7 +268,10 @@ impl Scanner for RustScanner {
                     TokenKind::Builtin
                 } else if is_function_call(b, end) && !was_keyword(prev_kind) {
                     TokenKind::Function
-                } else if matches!(prev_kind, Some(TokenKind::Punctuation)) && i >= 1 && b[i - 1] == b'.' {
+                } else if matches!(prev_kind, Some(TokenKind::Punctuation))
+                    && i >= 1
+                    && b[i - 1] == b'.'
+                {
                     // After a dot — property or method
                     if is_function_call(b, end) {
                         TokenKind::Function
@@ -160,7 +281,11 @@ impl Scanner for RustScanner {
                 } else {
                     TokenKind::Plain
                 };
-                tokens.push(Token { kind, start: i, end });
+                tokens.push(Token {
+                    kind,
+                    start: i,
+                    end,
+                });
                 prev_kind = Some(kind);
                 i = end;
                 continue;
@@ -168,7 +293,11 @@ impl Scanner for RustScanner {
 
             // Operators
             if let Some(end) = scan_operator(b, i) {
-                tokens.push(Token { kind: TokenKind::Operator, start: i, end });
+                tokens.push(Token {
+                    kind: TokenKind::Operator,
+                    start: i,
+                    end,
+                });
                 prev_kind = Some(TokenKind::Operator);
                 i = end;
                 continue;
@@ -176,7 +305,11 @@ impl Scanner for RustScanner {
 
             // Punctuation
             if let Some(end) = scan_punctuation(b, i) {
-                tokens.push(Token { kind: TokenKind::Punctuation, start: i, end });
+                tokens.push(Token {
+                    kind: TokenKind::Punctuation,
+                    start: i,
+                    end,
+                });
                 prev_kind = Some(TokenKind::Punctuation);
                 i = end;
                 continue;
@@ -273,11 +406,7 @@ fn scan_rust_char_or_lifetime(b: &[u8], pos: usize) -> Option<usize> {
         }
         i += 1;
     }
-    if at(b, i) == b'\'' {
-        Some(i + 1)
-    } else {
-        None
-    }
+    if at(b, i) == b'\'' { Some(i + 1) } else { None }
 }
 
 #[cfg(test)]

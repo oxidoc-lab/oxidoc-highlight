@@ -1,5 +1,5 @@
-use fluxbench::bench;
 use fluxbench::Bencher;
+use fluxbench::bench;
 
 fn generate_rust_code(lines: usize) -> String {
     let mut code = String::new();
@@ -14,17 +14,13 @@ fn generate_rust_code(lines: usize) -> String {
 #[bench]
 fn highlight_100_lines(b: &mut Bencher) {
     let code = generate_rust_code(17);
-    b.iter(|| {
-        oxidoc_highlight::highlight(&code, "rust")
-    });
+    b.iter(|| oxidoc_highlight::highlight(&code, "rust"));
 }
 
 #[bench]
 fn highlight_1000_lines(b: &mut Bencher) {
     let code = generate_rust_code(167);
-    b.iter(|| {
-        oxidoc_highlight::highlight(&code, "rust")
-    });
+    b.iter(|| oxidoc_highlight::highlight(&code, "rust"));
 }
 
 #[bench]
@@ -35,9 +31,7 @@ fn highlight_js_500_lines(b: &mut Bencher) {
             "function func_{i}(x, y) {{\n  const result = x + {i};\n  console.log(`value: ${{result}}`);\n  return {{ name: \"test\", value: result }};\n}}\n\n"
         ));
     }
-    b.iter(|| {
-        oxidoc_highlight::highlight(&code, "javascript")
-    });
+    b.iter(|| oxidoc_highlight::highlight(&code, "javascript"));
 }
 
 fn main() {

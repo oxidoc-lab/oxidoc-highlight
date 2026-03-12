@@ -36,12 +36,20 @@ impl Scanner for RdxScanner {
             if line_start && !frontmatter_started && i == 0 && b[i..].starts_with(b"---") {
                 let start = i;
                 i += 3;
-                while i < b.len() && b[i] != b'\n' { i += 1; }
-                tokens.push(Token { kind: TokenKind::Keyword, start, end: i });
+                while i < b.len() && b[i] != b'\n' {
+                    i += 1;
+                }
+                tokens.push(Token {
+                    kind: TokenKind::Keyword,
+                    start,
+                    end: i,
+                });
                 in_frontmatter = true;
                 frontmatter_started = true;
                 line_start = true;
-                if i < b.len() { i += 1; }
+                if i < b.len() {
+                    i += 1;
+                }
                 continue;
             }
 
@@ -49,17 +57,27 @@ impl Scanner for RdxScanner {
                 if line_start && b[i..].starts_with(b"---") {
                     let start = i;
                     i += 3;
-                    while i < b.len() && b[i] != b'\n' { i += 1; }
-                    tokens.push(Token { kind: TokenKind::Keyword, start, end: i });
+                    while i < b.len() && b[i] != b'\n' {
+                        i += 1;
+                    }
+                    tokens.push(Token {
+                        kind: TokenKind::Keyword,
+                        start,
+                        end: i,
+                    });
                     in_frontmatter = false;
                     line_start = true;
-                    if i < b.len() { i += 1; }
+                    if i < b.len() {
+                        i += 1;
+                    }
                     continue;
                 }
                 // Inside frontmatter: scan as YAML key: value
                 let start = i;
                 scan_frontmatter_line(b, &mut i, &mut tokens);
-                if i == start { i += 1; } // safety
+                if i == start {
+                    i += 1;
+                } // safety
                 line_start = true;
                 continue;
             }
@@ -68,20 +86,33 @@ impl Scanner for RdxScanner {
             if line_start && !in_code_fence {
                 // Skip leading whitespace
                 let mut ws = i;
-                while ws < b.len() && (b[ws] == b' ' || b[ws] == b'\t') { ws += 1; }
+                while ws < b.len() && (b[ws] == b' ' || b[ws] == b'\t') {
+                    ws += 1;
+                }
 
                 if at(b, ws) == b'`' {
                     let mut fl = 0;
-                    while ws < b.len() && b[ws] == b'`' { ws += 1; fl += 1; }
+                    while ws < b.len() && b[ws] == b'`' {
+                        ws += 1;
+                        fl += 1;
+                    }
                     if fl >= 3 {
                         // Code fence opening — include lang tag
                         let start = i;
-                        while i < b.len() && b[i] != b'\n' { i += 1; }
-                        tokens.push(Token { kind: TokenKind::String, start, end: i });
+                        while i < b.len() && b[i] != b'\n' {
+                            i += 1;
+                        }
+                        tokens.push(Token {
+                            kind: TokenKind::String,
+                            start,
+                            end: i,
+                        });
                         in_code_fence = true;
                         code_fence_len = fl;
                         line_start = true;
-                        if i < b.len() { i += 1; }
+                        if i < b.len() {
+                            i += 1;
+                        }
                         continue;
                     }
                 }
@@ -90,26 +121,41 @@ impl Scanner for RdxScanner {
             if in_code_fence {
                 // Check for closing fence
                 let mut ws = i;
-                while ws < b.len() && (b[ws] == b' ' || b[ws] == b'\t') { ws += 1; }
+                while ws < b.len() && (b[ws] == b' ' || b[ws] == b'\t') {
+                    ws += 1;
+                }
                 let mut fl = 0;
-                while ws < b.len() && b[ws] == b'`' { ws += 1; fl += 1; }
+                while ws < b.len() && b[ws] == b'`' {
+                    ws += 1;
+                    fl += 1;
+                }
                 if fl >= code_fence_len {
                     // Check rest of line is whitespace
                     let mut rest = ws;
-                    while rest < b.len() && (b[rest] == b' ' || b[rest] == b'\t') { rest += 1; }
+                    while rest < b.len() && (b[rest] == b' ' || b[rest] == b'\t') {
+                        rest += 1;
+                    }
                     if rest >= b.len() || b[rest] == b'\n' {
                         let start = i;
                         i = rest;
-                        tokens.push(Token { kind: TokenKind::String, start, end: i });
+                        tokens.push(Token {
+                            kind: TokenKind::String,
+                            start,
+                            end: i,
+                        });
                         in_code_fence = false;
                         line_start = true;
                         continue;
                     }
                 }
                 // Code fence content — pass through as plain
-                while i < b.len() && b[i] != b'\n' { i += 1; }
+                while i < b.len() && b[i] != b'\n' {
+                    i += 1;
+                }
                 line_start = true;
-                if i < b.len() { i += 1; }
+                if i < b.len() {
+                    i += 1;
+                }
                 continue;
             }
 
@@ -133,7 +179,11 @@ impl Scanner for RdxScanner {
                     }
                     i += 1;
                 }
-                tokens.push(Token { kind: TokenKind::Comment, start, end: i.min(b.len()) });
+                tokens.push(Token {
+                    kind: TokenKind::Comment,
+                    start,
+                    end: i.min(b.len()),
+                });
                 continue;
             }
 
@@ -141,7 +191,11 @@ impl Scanner for RdxScanner {
             if c == b'\\' && i + 1 < b.len() {
                 let next = b[i + 1];
                 if matches!(next, b'{' | b'}' | b'\\') {
-                    tokens.push(Token { kind: TokenKind::Operator, start: i, end: i + 2 });
+                    tokens.push(Token {
+                        kind: TokenKind::Operator,
+                        start: i,
+                        end: i + 2,
+                    });
                     i += 2;
                     continue;
                 }
@@ -152,15 +206,24 @@ impl Scanner for RdxScanner {
                 let start = i;
                 i += 2;
                 // Scan variable path: [a-zA-Z_][a-zA-Z0-9_]*(\.[a-zA-Z_][a-zA-Z0-9_]*)*
-                while i < b.len() && (b[i].is_ascii_alphanumeric() || b[i] == b'_' || b[i] == b'.') {
+                while i < b.len() && (b[i].is_ascii_alphanumeric() || b[i] == b'_' || b[i] == b'.')
+                {
                     i += 1;
                 }
                 if at(b, i) == b'}' {
                     i += 1;
-                    tokens.push(Token { kind: TokenKind::Variable, start, end: i });
+                    tokens.push(Token {
+                        kind: TokenKind::Variable,
+                        start,
+                        end: i,
+                    });
                 } else {
                     // Malformed variable — still mark it
-                    tokens.push(Token { kind: TokenKind::Variable, start, end: i });
+                    tokens.push(Token {
+                        kind: TokenKind::Variable,
+                        start,
+                        end: i,
+                    });
                 }
                 continue;
             }
@@ -181,7 +244,11 @@ impl Scanner for RdxScanner {
                         i += 1;
                     }
                 }
-                tokens.push(Token { kind: TokenKind::String, start, end: i });
+                tokens.push(Token {
+                    kind: TokenKind::String,
+                    start,
+                    end: i,
+                });
                 continue;
             }
 
@@ -198,13 +265,23 @@ impl Scanner for RdxScanner {
                     while i < b.len() && (b[i].is_ascii_alphanumeric() || b[i] == b'_') {
                         i += 1;
                     }
-                    tokens.push(Token { kind: TokenKind::Keyword, start: tag_start, end: i });
+                    tokens.push(Token {
+                        kind: TokenKind::Keyword,
+                        start: tag_start,
+                        end: i,
+                    });
 
                     // For closing tags, just find >
                     if is_closing {
-                        while i < b.len() && b[i] != b'>' { i += 1; }
+                        while i < b.len() && b[i] != b'>' {
+                            i += 1;
+                        }
                         if i < b.len() {
-                            tokens.push(Token { kind: TokenKind::Punctuation, start: i, end: i + 1 });
+                            tokens.push(Token {
+                                kind: TokenKind::Punctuation,
+                                start: i,
+                                end: i + 1,
+                            });
                             i += 1;
                         }
                         continue;
@@ -218,33 +295,81 @@ impl Scanner for RdxScanner {
                 // Lowercase HTML tags — same treatment as HTML scanner
                 if at(b, name_pos).is_ascii_lowercase() {
                     i = name_pos;
-                    while i < b.len() && (b[i].is_ascii_alphanumeric() || b[i] == b'-' || b[i] == b'_') {
+                    while i < b.len()
+                        && (b[i].is_ascii_alphanumeric() || b[i] == b'-' || b[i] == b'_')
+                    {
                         i += 1;
                     }
-                    tokens.push(Token { kind: TokenKind::Attr, start: tag_start, end: i });
+                    tokens.push(Token {
+                        kind: TokenKind::Attr,
+                        start: tag_start,
+                        end: i,
+                    });
 
                     // Scan HTML attrs until >
                     while i < b.len() && b[i] != b'>' {
-                        if b[i] == b' ' || b[i] == b'\t' || b[i] == b'\n' || b[i] == b'\r' { i += 1; continue; }
+                        if b[i] == b' ' || b[i] == b'\t' || b[i] == b'\n' || b[i] == b'\r' {
+                            i += 1;
+                            continue;
+                        }
                         if b[i] == b'/' && at(b, i + 1) == b'>' {
-                            tokens.push(Token { kind: TokenKind::Punctuation, start: i, end: i + 2 });
+                            tokens.push(Token {
+                                kind: TokenKind::Punctuation,
+                                start: i,
+                                end: i + 2,
+                            });
                             i += 2;
                             break;
                         }
-                        if b[i].is_ascii_alphabetic() || b[i] == b'-' || b[i] == b'_' || b[i] == b':' || b[i] == b'@' {
+                        if b[i].is_ascii_alphabetic()
+                            || b[i] == b'-'
+                            || b[i] == b'_'
+                            || b[i] == b':'
+                            || b[i] == b'@'
+                        {
                             let as_ = i;
-                            while i < b.len() && (b[i].is_ascii_alphanumeric() || b[i] == b'-' || b[i] == b'_' || b[i] == b':' || b[i] == b'@') { i += 1; }
-                            tokens.push(Token { kind: TokenKind::Attr, start: as_, end: i });
-                            while i < b.len() && b[i] == b' ' { i += 1; }
-                            if at(b, i) == b'=' {
-                                tokens.push(Token { kind: TokenKind::Operator, start: i, end: i + 1 });
+                            while i < b.len()
+                                && (b[i].is_ascii_alphanumeric()
+                                    || b[i] == b'-'
+                                    || b[i] == b'_'
+                                    || b[i] == b':'
+                                    || b[i] == b'@')
+                            {
                                 i += 1;
-                                while i < b.len() && b[i] == b' ' { i += 1; }
+                            }
+                            tokens.push(Token {
+                                kind: TokenKind::Attr,
+                                start: as_,
+                                end: i,
+                            });
+                            while i < b.len() && b[i] == b' ' {
+                                i += 1;
+                            }
+                            if at(b, i) == b'=' {
+                                tokens.push(Token {
+                                    kind: TokenKind::Operator,
+                                    start: i,
+                                    end: i + 1,
+                                });
+                                i += 1;
+                                while i < b.len() && b[i] == b' ' {
+                                    i += 1;
+                                }
                                 if at(b, i) == b'"' || at(b, i) == b'\'' {
-                                    let q = b[i]; let vs = i; i += 1;
-                                    while i < b.len() && b[i] != q { i += 1; }
-                                    if i < b.len() { i += 1; }
-                                    tokens.push(Token { kind: TokenKind::String, start: vs, end: i });
+                                    let q = b[i];
+                                    let vs = i;
+                                    i += 1;
+                                    while i < b.len() && b[i] != q {
+                                        i += 1;
+                                    }
+                                    if i < b.len() {
+                                        i += 1;
+                                    }
+                                    tokens.push(Token {
+                                        kind: TokenKind::String,
+                                        start: vs,
+                                        end: i,
+                                    });
                                 }
                             }
                             continue;
@@ -252,7 +377,11 @@ impl Scanner for RdxScanner {
                         i += 1;
                     }
                     if i < b.len() && b[i] == b'>' {
-                        tokens.push(Token { kind: TokenKind::Punctuation, start: i, end: i + 1 });
+                        tokens.push(Token {
+                            kind: TokenKind::Punctuation,
+                            start: i,
+                            end: i + 1,
+                        });
                         i += 1;
                     }
                     continue;
@@ -263,23 +392,41 @@ impl Scanner for RdxScanner {
             if c == b'$' && at(b, i + 1) == b'$' {
                 let start = i;
                 i += 2;
-                while i < b.len() && b[i] != b'\n' { i += 1; }
+                while i < b.len() && b[i] != b'\n' {
+                    i += 1;
+                }
                 // Find closing $$
-                if i < b.len() { i += 1; }
+                if i < b.len() {
+                    i += 1;
+                }
                 while i < b.len() {
                     let ls = i;
                     let mut ws = i;
-                    while ws < b.len() && (b[ws] == b' ' || b[ws] == b'\t') { ws += 1; }
+                    while ws < b.len() && (b[ws] == b' ' || b[ws] == b'\t') {
+                        ws += 1;
+                    }
                     if at(b, ws) == b'$' && at(b, ws + 1) == b'$' {
                         i = ws + 2;
-                        while i < b.len() && b[i] != b'\n' { i += 1; }
+                        while i < b.len() && b[i] != b'\n' {
+                            i += 1;
+                        }
                         break;
                     }
-                    while i < b.len() && b[i] != b'\n' { i += 1; }
-                    if i < b.len() { i += 1; }
-                    if i == ls { break; }
+                    while i < b.len() && b[i] != b'\n' {
+                        i += 1;
+                    }
+                    if i < b.len() {
+                        i += 1;
+                    }
+                    if i == ls {
+                        break;
+                    }
                 }
-                tokens.push(Token { kind: TokenKind::String, start, end: i });
+                tokens.push(Token {
+                    kind: TokenKind::String,
+                    start,
+                    end: i,
+                });
                 continue;
             }
 
@@ -292,7 +439,11 @@ impl Scanner for RdxScanner {
                 }
                 if i < b.len() && b[i] == b'$' {
                     i += 1;
-                    tokens.push(Token { kind: TokenKind::String, start, end: i });
+                    tokens.push(Token {
+                        kind: TokenKind::String,
+                        start,
+                        end: i,
+                    });
                     continue;
                 }
                 // Not a math expression, backtrack
@@ -302,9 +453,17 @@ impl Scanner for RdxScanner {
             // ── Markdown headings ────────────────────────────────────
             if was_line_start && c == b'#' {
                 let start = i;
-                while i < b.len() && b[i] == b'#' { i += 1; }
-                while i < b.len() && b[i] != b'\n' { i += 1; }
-                tokens.push(Token { kind: TokenKind::Keyword, start, end: i });
+                while i < b.len() && b[i] == b'#' {
+                    i += 1;
+                }
+                while i < b.len() && b[i] != b'\n' {
+                    i += 1;
+                }
+                tokens.push(Token {
+                    kind: TokenKind::Keyword,
+                    start,
+                    end: i,
+                });
                 line_start = true;
                 continue;
             }
@@ -313,9 +472,17 @@ impl Scanner for RdxScanner {
             if c == b'`' {
                 let start = i;
                 i += 1;
-                while i < b.len() && b[i] != b'`' && b[i] != b'\n' { i += 1; }
-                if i < b.len() && b[i] == b'`' { i += 1; }
-                tokens.push(Token { kind: TokenKind::String, start, end: i });
+                while i < b.len() && b[i] != b'`' && b[i] != b'\n' {
+                    i += 1;
+                }
+                if i < b.len() && b[i] == b'`' {
+                    i += 1;
+                }
+                tokens.push(Token {
+                    kind: TokenKind::String,
+                    start,
+                    end: i,
+                });
                 continue;
             }
 
@@ -325,11 +492,19 @@ impl Scanner for RdxScanner {
                 let start = i;
                 i += 2;
                 while i + 1 < b.len() && !(b[i] == delim && b[i + 1] == delim) {
-                    if b[i] == b'\n' { break; }
+                    if b[i] == b'\n' {
+                        break;
+                    }
                     i += 1;
                 }
-                if i + 1 < b.len() && b[i] == delim && b[i + 1] == delim { i += 2; }
-                tokens.push(Token { kind: TokenKind::Keyword, start, end: i });
+                if i + 1 < b.len() && b[i] == delim && b[i + 1] == delim {
+                    i += 2;
+                }
+                tokens.push(Token {
+                    kind: TokenKind::Keyword,
+                    start,
+                    end: i,
+                });
                 continue;
             }
 
@@ -338,11 +513,19 @@ impl Scanner for RdxScanner {
                 let start = i;
                 i += 2;
                 while i + 1 < b.len() && !(b[i] == b'~' && b[i + 1] == b'~') {
-                    if b[i] == b'\n' { break; }
+                    if b[i] == b'\n' {
+                        break;
+                    }
                     i += 1;
                 }
-                if i + 1 < b.len() && b[i] == b'~' && b[i + 1] == b'~' { i += 2; }
-                tokens.push(Token { kind: TokenKind::Keyword, start, end: i });
+                if i + 1 < b.len() && b[i] == b'~' && b[i + 1] == b'~' {
+                    i += 2;
+                }
+                tokens.push(Token {
+                    kind: TokenKind::Keyword,
+                    start,
+                    end: i,
+                });
                 continue;
             }
 
@@ -351,9 +534,17 @@ impl Scanner for RdxScanner {
                 let delim = c;
                 let start = i;
                 i += 1;
-                while i < b.len() && b[i] != delim && b[i] != b'\n' { i += 1; }
-                if i < b.len() && b[i] == delim { i += 1; }
-                tokens.push(Token { kind: TokenKind::Keyword, start, end: i });
+                while i < b.len() && b[i] != delim && b[i] != b'\n' {
+                    i += 1;
+                }
+                if i < b.len() && b[i] == delim {
+                    i += 1;
+                }
+                tokens.push(Token {
+                    kind: TokenKind::Keyword,
+                    start,
+                    end: i,
+                });
                 continue;
             }
 
@@ -361,18 +552,32 @@ impl Scanner for RdxScanner {
             if c == b'[' {
                 let start = i;
                 i += 1;
-                while i < b.len() && b[i] != b']' && b[i] != b'\n' { i += 1; }
+                while i < b.len() && b[i] != b']' && b[i] != b'\n' {
+                    i += 1;
+                }
                 if at(b, i) == b']' && at(b, i + 1) == b'(' {
                     i += 2;
-                    while i < b.len() && b[i] != b')' && b[i] != b'\n' { i += 1; }
-                    if at(b, i) == b')' { i += 1; }
-                    tokens.push(Token { kind: TokenKind::String, start, end: i });
+                    while i < b.len() && b[i] != b')' && b[i] != b'\n' {
+                        i += 1;
+                    }
+                    if at(b, i) == b')' {
+                        i += 1;
+                    }
+                    tokens.push(Token {
+                        kind: TokenKind::String,
+                        start,
+                        end: i,
+                    });
                     continue;
                 }
                 // Footnote references [^1]
                 if at(b, i) == b']' {
                     i += 1;
-                    tokens.push(Token { kind: TokenKind::Attr, start, end: i });
+                    tokens.push(Token {
+                        kind: TokenKind::Attr,
+                        start,
+                        end: i,
+                    });
                     continue;
                 }
             }
@@ -381,29 +586,53 @@ impl Scanner for RdxScanner {
             if c == b'!' && at(b, i + 1) == b'[' {
                 let start = i;
                 i += 2;
-                while i < b.len() && b[i] != b']' && b[i] != b'\n' { i += 1; }
+                while i < b.len() && b[i] != b']' && b[i] != b'\n' {
+                    i += 1;
+                }
                 if at(b, i) == b']' && at(b, i + 1) == b'(' {
                     i += 2;
-                    while i < b.len() && b[i] != b')' && b[i] != b'\n' { i += 1; }
-                    if at(b, i) == b')' { i += 1; }
-                    tokens.push(Token { kind: TokenKind::String, start, end: i });
+                    while i < b.len() && b[i] != b')' && b[i] != b'\n' {
+                        i += 1;
+                    }
+                    if at(b, i) == b')' {
+                        i += 1;
+                    }
+                    tokens.push(Token {
+                        kind: TokenKind::String,
+                        start,
+                        end: i,
+                    });
                     continue;
                 }
             }
 
             // ── Blockquote > ─────────────────────────────────────────
             if was_line_start && c == b'>' {
-                tokens.push(Token { kind: TokenKind::Keyword, start: i, end: i + 1 });
+                tokens.push(Token {
+                    kind: TokenKind::Keyword,
+                    start: i,
+                    end: i + 1,
+                });
                 i += 1;
                 continue;
             }
 
             // ── Thematic break --- / *** / ___ ───────────────────────
-            if was_line_start && matches!(c, b'-' | b'*' | b'_') && at(b, i + 1) == c && at(b, i + 2) == c {
+            if was_line_start
+                && matches!(c, b'-' | b'*' | b'_')
+                && at(b, i + 1) == c
+                && at(b, i + 2) == c
+            {
                 let start = i;
-                while i < b.len() && (b[i] == c || b[i] == b' ') { i += 1; }
+                while i < b.len() && (b[i] == c || b[i] == b' ') {
+                    i += 1;
+                }
                 if i >= b.len() || b[i] == b'\n' {
-                    tokens.push(Token { kind: TokenKind::Keyword, start, end: i });
+                    tokens.push(Token {
+                        kind: TokenKind::Keyword,
+                        start,
+                        end: i,
+                    });
                     line_start = true;
                     continue;
                 }
@@ -423,55 +652,95 @@ impl Scanner for RdxScanner {
 /// Scan a frontmatter line as YAML key: value.
 fn scan_frontmatter_line(b: &[u8], i: &mut usize, tokens: &mut Vec<Token>) {
     // Skip leading whitespace
-    while *i < b.len() && (b[*i] == b' ' || b[*i] == b'\t') { *i += 1; }
+    while *i < b.len() && (b[*i] == b' ' || b[*i] == b'\t') {
+        *i += 1;
+    }
 
     if *i >= b.len() || b[*i] == b'\n' {
-        if *i < b.len() { *i += 1; }
+        if *i < b.len() {
+            *i += 1;
+        }
         return;
     }
 
     // Comment
     if b[*i] == b'#' {
         let start = *i;
-        while *i < b.len() && b[*i] != b'\n' { *i += 1; }
-        tokens.push(Token { kind: TokenKind::Comment, start, end: *i });
-        if *i < b.len() { *i += 1; }
+        while *i < b.len() && b[*i] != b'\n' {
+            *i += 1;
+        }
+        tokens.push(Token {
+            kind: TokenKind::Comment,
+            start,
+            end: *i,
+        });
+        if *i < b.len() {
+            *i += 1;
+        }
         return;
     }
 
     // List item marker
     if b[*i] == b'-' && at(b, *i + 1) == b' ' {
-        tokens.push(Token { kind: TokenKind::Punctuation, start: *i, end: *i + 1 });
+        tokens.push(Token {
+            kind: TokenKind::Punctuation,
+            start: *i,
+            end: *i + 1,
+        });
         *i += 1;
         // Rest of line is a value
-        while *i < b.len() && b[*i] == b' ' { *i += 1; }
+        while *i < b.len() && b[*i] == b' ' {
+            *i += 1;
+        }
         let val_start = *i;
-        while *i < b.len() && b[*i] != b'\n' { *i += 1; }
+        while *i < b.len() && b[*i] != b'\n' {
+            *i += 1;
+        }
         if *i > val_start {
             scan_yaml_value(b, val_start, *i, tokens);
         }
-        if *i < b.len() { *i += 1; }
+        if *i < b.len() {
+            *i += 1;
+        }
         return;
     }
 
     // Key: value
     let key_start = *i;
-    while *i < b.len() && b[*i] != b':' && b[*i] != b'\n' { *i += 1; }
-    if *i < b.len() && b[*i] == b':' {
-        tokens.push(Token { kind: TokenKind::Property, start: key_start, end: *i });
-        tokens.push(Token { kind: TokenKind::Punctuation, start: *i, end: *i + 1 });
+    while *i < b.len() && b[*i] != b':' && b[*i] != b'\n' {
         *i += 1;
-        while *i < b.len() && b[*i] == b' ' { *i += 1; }
+    }
+    if *i < b.len() && b[*i] == b':' {
+        tokens.push(Token {
+            kind: TokenKind::Property,
+            start: key_start,
+            end: *i,
+        });
+        tokens.push(Token {
+            kind: TokenKind::Punctuation,
+            start: *i,
+            end: *i + 1,
+        });
+        *i += 1;
+        while *i < b.len() && b[*i] == b' ' {
+            *i += 1;
+        }
         let val_start = *i;
-        while *i < b.len() && b[*i] != b'\n' { *i += 1; }
+        while *i < b.len() && b[*i] != b'\n' {
+            *i += 1;
+        }
         if *i > val_start {
             scan_yaml_value(b, val_start, *i, tokens);
         }
     } else {
         // Plain text line
-        while *i < b.len() && b[*i] != b'\n' { *i += 1; }
+        while *i < b.len() && b[*i] != b'\n' {
+            *i += 1;
+        }
     }
-    if *i < b.len() { *i += 1; }
+    if *i < b.len() {
+        *i += 1;
+    }
 }
 
 /// Classify a YAML value span.
@@ -479,7 +748,9 @@ fn scan_yaml_value(b: &[u8], start: usize, end: usize, tokens: &mut Vec<Token>) 
     let val = &b[start..end];
     // Trim trailing whitespace
     let mut e = val.len();
-    while e > 0 && (val[e - 1] == b' ' || val[e - 1] == b'\t') { e -= 1; }
+    while e > 0 && (val[e - 1] == b' ' || val[e - 1] == b'\t') {
+        e -= 1;
+    }
     let trimmed = &val[..e];
 
     if trimmed.is_empty() {
@@ -488,26 +759,62 @@ fn scan_yaml_value(b: &[u8], start: usize, end: usize, tokens: &mut Vec<Token>) 
 
     // Quoted string
     if (trimmed[0] == b'"' || trimmed[0] == b'\'') && e >= 2 && trimmed[e - 1] == trimmed[0] {
-        tokens.push(Token { kind: TokenKind::String, start, end: start + e });
+        tokens.push(Token {
+            kind: TokenKind::String,
+            start,
+            end: start + e,
+        });
         return;
     }
 
     // Boolean / null
-    if matches!(trimmed, b"true" | b"false" | b"yes" | b"no" | b"null" | b"True" | b"False" | b"Yes" | b"No" | b"Null" | b"~") {
-        tokens.push(Token { kind: TokenKind::Keyword, start, end: start + e });
+    if matches!(
+        trimmed,
+        b"true"
+            | b"false"
+            | b"yes"
+            | b"no"
+            | b"null"
+            | b"True"
+            | b"False"
+            | b"Yes"
+            | b"No"
+            | b"Null"
+            | b"~"
+    ) {
+        tokens.push(Token {
+            kind: TokenKind::Keyword,
+            start,
+            end: start + e,
+        });
         return;
     }
 
     // Number
-    if trimmed.iter().all(|&c| c.is_ascii_digit() || c == b'.' || c == b'-' || c == b'+' || c == b'e' || c == b'E' || c == b'_')
-        && trimmed.iter().any(|&c| c.is_ascii_digit())
+    if trimmed.iter().all(|&c| {
+        c.is_ascii_digit()
+            || c == b'.'
+            || c == b'-'
+            || c == b'+'
+            || c == b'e'
+            || c == b'E'
+            || c == b'_'
+    }) && trimmed.iter().any(|&c| c.is_ascii_digit())
     {
-        tokens.push(Token { kind: TokenKind::Number, start, end: start + e });
+        tokens.push(Token {
+            kind: TokenKind::Number,
+            start,
+            end: start + e,
+        });
         return;
     }
 
     // Plain value
-    tokens.push(Token { kind: TokenKind::Plain, start, end: start + e });
+    tokens.push(Token {
+        kind: TokenKind::Plain,
+        start,
+        end: start + e,
+    });
 }
 
 /// Scan component attributes until `>` or `/>`.
@@ -520,7 +827,11 @@ fn scan_component_attrs(b: &[u8], i: &mut usize, tokens: &mut Vec<Token>) {
 
         // Self-closing />
         if b[*i] == b'/' && at(b, *i + 1) == b'>' {
-            tokens.push(Token { kind: TokenKind::Punctuation, start: *i, end: *i + 2 });
+            tokens.push(Token {
+                kind: TokenKind::Punctuation,
+                start: *i,
+                end: *i + 2,
+            });
             *i += 2;
             return;
         }
@@ -528,15 +839,24 @@ fn scan_component_attrs(b: &[u8], i: &mut usize, tokens: &mut Vec<Token>) {
         // Attribute name
         if b[*i].is_ascii_alphabetic() || b[*i] == b'_' {
             let attr_start = *i;
-            while *i < b.len() && (b[*i].is_ascii_alphanumeric() || b[*i] == b'_' || b[*i] == b'-') {
+            while *i < b.len() && (b[*i].is_ascii_alphanumeric() || b[*i] == b'_' || b[*i] == b'-')
+            {
                 *i += 1;
             }
             let attr_end = *i;
 
             // Check for = (no whitespace allowed around = in RDX)
             if at(b, *i) == b'=' {
-                tokens.push(Token { kind: TokenKind::Attr, start: attr_start, end: attr_end });
-                tokens.push(Token { kind: TokenKind::Operator, start: *i, end: *i + 1 });
+                tokens.push(Token {
+                    kind: TokenKind::Attr,
+                    start: attr_start,
+                    end: attr_end,
+                });
+                tokens.push(Token {
+                    kind: TokenKind::Operator,
+                    start: *i,
+                    end: *i + 1,
+                });
                 *i += 1;
 
                 // Value
@@ -547,7 +867,11 @@ fn scan_component_attrs(b: &[u8], i: &mut usize, tokens: &mut Vec<Token>) {
                     let vs = *i;
                     if let Some(end) = scan_quoted_string(b, *i, vc) {
                         *i = end;
-                        tokens.push(Token { kind: TokenKind::String, start: vs, end: *i });
+                        tokens.push(Token {
+                            kind: TokenKind::String,
+                            start: vs,
+                            end: *i,
+                        });
                     }
                 }
                 // JSON attribute {{ ... }}
@@ -556,21 +880,39 @@ fn scan_component_attrs(b: &[u8], i: &mut usize, tokens: &mut Vec<Token>) {
                     *i += 2;
                     let mut depth = 1u32;
                     while *i < b.len() && depth > 0 {
-                        if b[*i] == b'{' && at(b, *i + 1) == b'{' { depth += 1; *i += 2; }
-                        else if b[*i] == b'}' && at(b, *i + 1) == b'}' { depth -= 1; *i += 2; }
-                        else { *i += 1; }
+                        if b[*i] == b'{' && at(b, *i + 1) == b'{' {
+                            depth += 1;
+                            *i += 2;
+                        } else if b[*i] == b'}' && at(b, *i + 1) == b'}' {
+                            depth -= 1;
+                            *i += 2;
+                        } else {
+                            *i += 1;
+                        }
                     }
-                    tokens.push(Token { kind: TokenKind::String, start: vs, end: *i });
+                    tokens.push(Token {
+                        kind: TokenKind::String,
+                        start: vs,
+                        end: *i,
+                    });
                 }
                 // Variable attribute {$var}
                 else if vc == b'{' && at(b, *i + 1) == b'$' {
                     let vs = *i;
                     *i += 2;
-                    while *i < b.len() && (b[*i].is_ascii_alphanumeric() || b[*i] == b'_' || b[*i] == b'.') {
+                    while *i < b.len()
+                        && (b[*i].is_ascii_alphanumeric() || b[*i] == b'_' || b[*i] == b'.')
+                    {
                         *i += 1;
                     }
-                    if at(b, *i) == b'}' { *i += 1; }
-                    tokens.push(Token { kind: TokenKind::Variable, start: vs, end: *i });
+                    if at(b, *i) == b'}' {
+                        *i += 1;
+                    }
+                    tokens.push(Token {
+                        kind: TokenKind::Variable,
+                        start: vs,
+                        end: *i,
+                    });
                 }
                 // Primitive literal {true}, {false}, {null}, {42}, {-2.5}
                 else if vc == b'{' {
@@ -579,10 +921,13 @@ fn scan_component_attrs(b: &[u8], i: &mut usize, tokens: &mut Vec<Token>) {
                     while *i < b.len() && b[*i] != b'}' && b[*i] != b'\n' {
                         *i += 1;
                     }
-                    if at(b, *i) == b'}' { *i += 1; }
+                    if at(b, *i) == b'}' {
+                        *i += 1;
+                    }
                     // Classify the content
                     let content = &b[vs + 1..*i - 1];
-                    let trimmed = content.iter()
+                    let trimmed = content
+                        .iter()
                         .copied()
                         .skip_while(|&c| c == b' ')
                         .collect::<Vec<_>>();
@@ -591,11 +936,19 @@ fn scan_component_attrs(b: &[u8], i: &mut usize, tokens: &mut Vec<Token>) {
                     } else {
                         TokenKind::Number
                     };
-                    tokens.push(Token { kind, start: vs, end: *i });
+                    tokens.push(Token {
+                        kind,
+                        start: vs,
+                        end: *i,
+                    });
                 }
             } else {
                 // Boolean shorthand (attribute without value)
-                tokens.push(Token { kind: TokenKind::Attr, start: attr_start, end: attr_end });
+                tokens.push(Token {
+                    kind: TokenKind::Attr,
+                    start: attr_start,
+                    end: attr_end,
+                });
             }
             continue;
         }
@@ -605,7 +958,11 @@ fn scan_component_attrs(b: &[u8], i: &mut usize, tokens: &mut Vec<Token>) {
 
     // Closing >
     if *i < b.len() && b[*i] == b'>' {
-        tokens.push(Token { kind: TokenKind::Punctuation, start: *i, end: *i + 1 });
+        tokens.push(Token {
+            kind: TokenKind::Punctuation,
+            start: *i,
+            end: *i + 1,
+        });
         *i += 1;
     }
 }

@@ -24,7 +24,11 @@ impl Scanner for CssScanner {
 
             // Comments
             if let Some(end) = scan_block_comment(b, i) {
-                tokens.push(Token { kind: TokenKind::Comment, start: i, end });
+                tokens.push(Token {
+                    kind: TokenKind::Comment,
+                    start: i,
+                    end,
+                });
                 i = end;
                 continue;
             }
@@ -32,14 +36,22 @@ impl Scanner for CssScanner {
             // Strings
             if c == b'"' {
                 if let Some(end) = scan_double_string(b, i) {
-                    tokens.push(Token { kind: TokenKind::String, start: i, end });
+                    tokens.push(Token {
+                        kind: TokenKind::String,
+                        start: i,
+                        end,
+                    });
                     i = end;
                     continue;
                 }
             }
             if c == b'\'' {
                 if let Some(end) = scan_single_string(b, i) {
-                    tokens.push(Token { kind: TokenKind::String, start: i, end });
+                    tokens.push(Token {
+                        kind: TokenKind::String,
+                        start: i,
+                        end,
+                    });
                     i = end;
                     continue;
                 }
@@ -52,20 +64,32 @@ impl Scanner for CssScanner {
                 while i < b.len() && (b[i].is_ascii_alphanumeric() || b[i] == b'-') {
                     i += 1;
                 }
-                tokens.push(Token { kind: TokenKind::Keyword, start, end: i });
+                tokens.push(Token {
+                    kind: TokenKind::Keyword,
+                    start,
+                    end: i,
+                });
                 continue;
             }
 
             // Track block depth
             if c == b'{' {
                 in_block = true;
-                tokens.push(Token { kind: TokenKind::Punctuation, start: i, end: i + 1 });
+                tokens.push(Token {
+                    kind: TokenKind::Punctuation,
+                    start: i,
+                    end: i + 1,
+                });
                 i += 1;
                 continue;
             }
             if c == b'}' {
                 in_block = false;
-                tokens.push(Token { kind: TokenKind::Punctuation, start: i, end: i + 1 });
+                tokens.push(Token {
+                    kind: TokenKind::Punctuation,
+                    start: i,
+                    end: i + 1,
+                });
                 i += 1;
                 continue;
             }
@@ -75,20 +99,34 @@ impl Scanner for CssScanner {
                 // Property name (before colon)
                 if c.is_ascii_alphabetic() || c == b'-' || c == b'_' {
                     let start = i;
-                    while i < b.len() && (b[i].is_ascii_alphanumeric() || b[i] == b'-' || b[i] == b'_') {
+                    while i < b.len()
+                        && (b[i].is_ascii_alphanumeric() || b[i] == b'-' || b[i] == b'_')
+                    {
                         i += 1;
                     }
                     let after = skip_whitespace_no_newline(b, i);
                     if at(b, after) == b':' {
-                        tokens.push(Token { kind: TokenKind::Property, start, end: i });
+                        tokens.push(Token {
+                            kind: TokenKind::Property,
+                            start,
+                            end: i,
+                        });
                     } else {
-                        tokens.push(Token { kind: TokenKind::Plain, start, end: i });
+                        tokens.push(Token {
+                            kind: TokenKind::Plain,
+                            start,
+                            end: i,
+                        });
                     }
                     continue;
                 }
 
                 if c == b':' {
-                    tokens.push(Token { kind: TokenKind::Punctuation, start: i, end: i + 1 });
+                    tokens.push(Token {
+                        kind: TokenKind::Punctuation,
+                        start: i,
+                        end: i + 1,
+                    });
                     i += 1;
                     continue;
                 }
@@ -101,7 +139,11 @@ impl Scanner for CssScanner {
                         while e < b.len() && (b[e].is_ascii_alphabetic() || b[e] == b'%') {
                             e += 1;
                         }
-                        tokens.push(Token { kind: TokenKind::Number, start: i, end: e });
+                        tokens.push(Token {
+                            kind: TokenKind::Number,
+                            start: i,
+                            end: e,
+                        });
                         i = e;
                         continue;
                     }
@@ -114,20 +156,34 @@ impl Scanner for CssScanner {
                     while i < b.len() && b[i].is_ascii_hexdigit() {
                         i += 1;
                     }
-                    tokens.push(Token { kind: TokenKind::Number, start, end: i });
+                    tokens.push(Token {
+                        kind: TokenKind::Number,
+                        start,
+                        end: i,
+                    });
                     continue;
                 }
 
                 // Function calls in values (rgb, calc, etc)
                 if c.is_ascii_alphabetic() || c == b'-' {
                     let start = i;
-                    while i < b.len() && (b[i].is_ascii_alphanumeric() || b[i] == b'-' || b[i] == b'_') {
+                    while i < b.len()
+                        && (b[i].is_ascii_alphanumeric() || b[i] == b'-' || b[i] == b'_')
+                    {
                         i += 1;
                     }
                     if at(b, i) == b'(' {
-                        tokens.push(Token { kind: TokenKind::Function, start, end: i });
+                        tokens.push(Token {
+                            kind: TokenKind::Function,
+                            start,
+                            end: i,
+                        });
                     } else {
-                        tokens.push(Token { kind: TokenKind::Plain, start, end: i });
+                        tokens.push(Token {
+                            kind: TokenKind::Plain,
+                            start,
+                            end: i,
+                        });
                     }
                     continue;
                 }
@@ -138,19 +194,27 @@ impl Scanner for CssScanner {
                     // Just consume selector chars
                     if c == b'.' || c == b'#' {
                         i += 1;
-                        while i < b.len() && (b[i].is_ascii_alphanumeric() || b[i] == b'-' || b[i] == b'_') {
+                        while i < b.len()
+                            && (b[i].is_ascii_alphanumeric() || b[i] == b'-' || b[i] == b'_')
+                        {
                             i += 1;
                         }
                     } else if c == b':' {
                         i += 1;
-                        if at(b, i) == b':' { i += 1; }
+                        if at(b, i) == b':' {
+                            i += 1;
+                        }
                         while i < b.len() && (b[i].is_ascii_alphanumeric() || b[i] == b'-') {
                             i += 1;
                         }
                     } else {
                         i += 1;
                     }
-                    tokens.push(Token { kind: TokenKind::Keyword, start, end: i });
+                    tokens.push(Token {
+                        kind: TokenKind::Keyword,
+                        start,
+                        end: i,
+                    });
                     continue;
                 }
 
@@ -160,14 +224,22 @@ impl Scanner for CssScanner {
                     while i < b.len() && (b[i].is_ascii_alphanumeric() || b[i] == b'-') {
                         i += 1;
                     }
-                    tokens.push(Token { kind: TokenKind::Keyword, start, end: i });
+                    tokens.push(Token {
+                        kind: TokenKind::Keyword,
+                        start,
+                        end: i,
+                    });
                     continue;
                 }
             }
 
             // Punctuation
             if let Some(end) = scan_punctuation(b, i) {
-                tokens.push(Token { kind: TokenKind::Punctuation, start: i, end });
+                tokens.push(Token {
+                    kind: TokenKind::Punctuation,
+                    start: i,
+                    end,
+                });
                 i = end;
                 continue;
             }

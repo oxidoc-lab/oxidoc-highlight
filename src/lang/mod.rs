@@ -1,21 +1,21 @@
-mod rust;
-mod javascript;
-mod python;
 mod bash;
-mod html;
-mod css;
-mod json;
-mod toml;
-mod yaml;
-mod go;
 mod c;
-mod java;
-mod php;
-mod sql;
-mod markdown;
-mod rdx;
-mod xml;
+mod css;
 mod diff;
+mod go;
+mod html;
+mod java;
+mod javascript;
+mod json;
+mod markdown;
+mod php;
+mod python;
+mod rdx;
+mod rust;
+mod sql;
+mod toml;
+mod xml;
+mod yaml;
 
 use crate::scanner::Scanner;
 use crate::token::Token;
@@ -24,10 +24,22 @@ use crate::token::Token;
 pub fn get_scanner(lang: &str) -> Option<Box<dyn Scanner>> {
     match lang {
         "rust" | "rs" => Some(Box::new(rust::RustScanner)),
-        "javascript" | "js" => Some(Box::new(javascript::JsScanner { typescript: false, jsx: false })),
-        "jsx" => Some(Box::new(javascript::JsScanner { typescript: false, jsx: true })),
-        "typescript" | "ts" => Some(Box::new(javascript::JsScanner { typescript: true, jsx: false })),
-        "tsx" => Some(Box::new(javascript::JsScanner { typescript: true, jsx: true })),
+        "javascript" | "js" => Some(Box::new(javascript::JsScanner {
+            typescript: false,
+            jsx: false,
+        })),
+        "jsx" => Some(Box::new(javascript::JsScanner {
+            typescript: false,
+            jsx: true,
+        })),
+        "typescript" | "ts" => Some(Box::new(javascript::JsScanner {
+            typescript: true,
+            jsx: false,
+        })),
+        "tsx" => Some(Box::new(javascript::JsScanner {
+            typescript: true,
+            jsx: true,
+        })),
         "python" | "py" => Some(Box::new(python::PythonScanner)),
         "bash" | "sh" | "shell" | "zsh" => Some(Box::new(bash::BashScanner)),
         "html" | "vue" | "svelte" => Some(Box::new(html::HtmlScanner)),
@@ -52,24 +64,59 @@ pub fn get_scanner(lang: &str) -> Option<Box<dyn Scanner>> {
 /// List of all supported language names.
 pub fn supported() -> Vec<&'static str> {
     vec![
-        "rust", "rs",
-        "javascript", "js", "jsx",
-        "typescript", "ts", "tsx",
-        "python", "py",
-        "bash", "sh", "shell", "zsh",
-        "html", "vue", "svelte",
-        "css", "scss", "less",
-        "json", "jsonc", "json5",
+        "rust",
+        "rs",
+        "javascript",
+        "js",
+        "jsx",
+        "typescript",
+        "ts",
+        "tsx",
+        "python",
+        "py",
+        "bash",
+        "sh",
+        "shell",
+        "zsh",
+        "html",
+        "vue",
+        "svelte",
+        "css",
+        "scss",
+        "less",
+        "json",
+        "jsonc",
+        "json5",
         "toml",
-        "yaml", "yml",
-        "go", "golang",
-        "c", "h", "cpp", "c++", "cxx", "cc", "hpp", "hxx",
-        "java", "kotlin", "kt",
+        "yaml",
+        "yml",
+        "go",
+        "golang",
+        "c",
+        "h",
+        "cpp",
+        "c++",
+        "cxx",
+        "cc",
+        "hpp",
+        "hxx",
+        "java",
+        "kotlin",
+        "kt",
         "php",
-        "sql", "mysql", "postgresql", "sqlite",
-        "markdown", "md", "rdx",
-        "xml", "svg", "xhtml", "xsl",
-        "diff", "patch",
+        "sql",
+        "mysql",
+        "postgresql",
+        "sqlite",
+        "markdown",
+        "md",
+        "rdx",
+        "xml",
+        "svg",
+        "xhtml",
+        "xsl",
+        "diff",
+        "patch",
     ]
 }
 

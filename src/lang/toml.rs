@@ -30,7 +30,11 @@ impl Scanner for TomlScanner {
             // Comments
             if c == b'#' {
                 if let Some(end) = scan_hash_comment(b, i) {
-                    tokens.push(Token { kind: TokenKind::Comment, start: i, end });
+                    tokens.push(Token {
+                        kind: TokenKind::Comment,
+                        start: i,
+                        end,
+                    });
                     i = end;
                     continue;
                 }
@@ -44,9 +48,17 @@ impl Scanner for TomlScanner {
                 while i < b.len() && b[i] != b']' && b[i] != b'\n' {
                     i += 1;
                 }
-                if at(b, i) == b']' { i += 1; }
-                if double && at(b, i) == b']' { i += 1; }
-                tokens.push(Token { kind: TokenKind::Keyword, start, end: i });
+                if at(b, i) == b']' {
+                    i += 1;
+                }
+                if double && at(b, i) == b']' {
+                    i += 1;
+                }
+                tokens.push(Token {
+                    kind: TokenKind::Keyword,
+                    start,
+                    end: i,
+                });
                 continue;
             }
 
@@ -61,7 +73,11 @@ impl Scanner for TomlScanner {
                     }
                     i += 1;
                 }
-                tokens.push(Token { kind: TokenKind::String, start, end: i.min(b.len()) });
+                tokens.push(Token {
+                    kind: TokenKind::String,
+                    start,
+                    end: i.min(b.len()),
+                });
                 continue;
             }
             if c == b'\'' && at(b, i + 1) == b'\'' && at(b, i + 2) == b'\'' {
@@ -74,21 +90,33 @@ impl Scanner for TomlScanner {
                     }
                     i += 1;
                 }
-                tokens.push(Token { kind: TokenKind::String, start, end: i.min(b.len()) });
+                tokens.push(Token {
+                    kind: TokenKind::String,
+                    start,
+                    end: i.min(b.len()),
+                });
                 continue;
             }
 
             // Strings
             if c == b'"' {
                 if let Some(end) = scan_double_string(b, i) {
-                    tokens.push(Token { kind: TokenKind::String, start: i, end });
+                    tokens.push(Token {
+                        kind: TokenKind::String,
+                        start: i,
+                        end,
+                    });
                     i = end;
                     continue;
                 }
             }
             if c == b'\'' {
                 if let Some(end) = scan_single_string(b, i) {
-                    tokens.push(Token { kind: TokenKind::String, start: i, end });
+                    tokens.push(Token {
+                        kind: TokenKind::String,
+                        start: i,
+                        end,
+                    });
                     i = end;
                     continue;
                 }
@@ -97,9 +125,15 @@ impl Scanner for TomlScanner {
             // Numbers
             if c.is_ascii_digit() || (c == b'+' || c == b'-') && at(b, i + 1).is_ascii_digit() {
                 let start = i;
-                if c == b'+' || c == b'-' { i += 1; }
+                if c == b'+' || c == b'-' {
+                    i += 1;
+                }
                 if let Some(end) = scan_number(b, i) {
-                    tokens.push(Token { kind: TokenKind::Number, start, end });
+                    tokens.push(Token {
+                        kind: TokenKind::Number,
+                        start,
+                        end,
+                    });
                     i = end;
                     continue;
                 }
@@ -124,21 +158,33 @@ impl Scanner for TomlScanner {
                         }
                     }
                 };
-                tokens.push(Token { kind, start: i, end });
+                tokens.push(Token {
+                    kind,
+                    start: i,
+                    end,
+                });
                 i = end;
                 continue;
             }
 
             // = operator
             if c == b'=' {
-                tokens.push(Token { kind: TokenKind::Operator, start: i, end: i + 1 });
+                tokens.push(Token {
+                    kind: TokenKind::Operator,
+                    start: i,
+                    end: i + 1,
+                });
                 i += 1;
                 continue;
             }
 
             // Punctuation
             if matches!(c, b'{' | b'}' | b',' | b'.' | b']') {
-                tokens.push(Token { kind: TokenKind::Punctuation, start: i, end: i + 1 });
+                tokens.push(Token {
+                    kind: TokenKind::Punctuation,
+                    start: i,
+                    end: i + 1,
+                });
                 i += 1;
                 continue;
             }

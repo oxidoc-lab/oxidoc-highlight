@@ -1,7 +1,7 @@
 pub mod escape;
-pub mod token;
-pub mod scanner;
 mod lang;
+pub mod scanner;
+pub mod token;
 
 use token::render;
 
@@ -40,7 +40,10 @@ mod wasm {
 
     #[wasm_bindgen(js_name = "supportedLanguages")]
     pub fn supported_languages_wasm() -> Vec<String> {
-        crate::supported_languages().into_iter().map(String::from).collect()
+        crate::supported_languages()
+            .into_iter()
+            .map(String::from)
+            .collect()
     }
 
     #[wasm_bindgen(js_name = "isSupported")]

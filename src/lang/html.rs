@@ -1,5 +1,5 @@
-use crate::token::{Token, TokenKind};
 use crate::scanner::Scanner;
+use crate::token::{Token, TokenKind};
 
 pub struct HtmlScanner;
 
@@ -26,7 +26,11 @@ impl Scanner for HtmlScanner {
                     i += 1;
                 }
                 // Terminated or unterminated — both are comment tokens
-                tokens.push(Token { kind: TokenKind::Comment, start, end: i.min(b.len()) });
+                tokens.push(Token {
+                    kind: TokenKind::Comment,
+                    start,
+                    end: i.min(b.len()),
+                });
                 continue;
             }
 
@@ -35,15 +39,27 @@ impl Scanner for HtmlScanner {
                 let start = i;
                 i += 1;
                 let is_closing = at(b, i) == b'/';
-                if is_closing { i += 1; }
+                if is_closing {
+                    i += 1;
+                }
 
                 // Tag name
                 if at(b, i).is_ascii_alphabetic() || at(b, i) == b'!' || at(b, i) == b'_' {
-                    while i < b.len() && (b[i].is_ascii_alphanumeric() || b[i] == b'-' || b[i] == b'_' || b[i] == b':' || b[i] == b'.') {
+                    while i < b.len()
+                        && (b[i].is_ascii_alphanumeric()
+                            || b[i] == b'-'
+                            || b[i] == b'_'
+                            || b[i] == b':'
+                            || b[i] == b'.')
+                    {
                         i += 1;
                     }
                     // The whole <tagname or </tagname as keyword
-                    tokens.push(Token { kind: TokenKind::Keyword, start, end: i });
+                    tokens.push(Token {
+                        kind: TokenKind::Keyword,
+                        start,
+                        end: i,
+                    });
 
                     // Attributes
                     while i < b.len() && b[i] != b'>' {
@@ -53,40 +69,84 @@ impl Scanner for HtmlScanner {
                         }
                         // Self-closing />
                         if b[i] == b'/' && at(b, i + 1) == b'>' {
-                            tokens.push(Token { kind: TokenKind::Punctuation, start: i, end: i + 2 });
+                            tokens.push(Token {
+                                kind: TokenKind::Punctuation,
+                                start: i,
+                                end: i + 2,
+                            });
                             i += 2;
                             break;
                         }
                         // Attribute name
-                        if b[i].is_ascii_alphabetic() || b[i] == b'_' || b[i] == b'-' || b[i] == b':' || b[i] == b'@' {
+                        if b[i].is_ascii_alphabetic()
+                            || b[i] == b'_'
+                            || b[i] == b'-'
+                            || b[i] == b':'
+                            || b[i] == b'@'
+                        {
                             let attr_start = i;
-                            while i < b.len() && (b[i].is_ascii_alphanumeric() || b[i] == b'-' || b[i] == b'_' || b[i] == b':' || b[i] == b'@' || b[i] == b'.') {
+                            while i < b.len()
+                                && (b[i].is_ascii_alphanumeric()
+                                    || b[i] == b'-'
+                                    || b[i] == b'_'
+                                    || b[i] == b':'
+                                    || b[i] == b'@'
+                                    || b[i] == b'.')
+                            {
                                 i += 1;
                             }
-                            tokens.push(Token { kind: TokenKind::Attr, start: attr_start, end: i });
+                            tokens.push(Token {
+                                kind: TokenKind::Attr,
+                                start: attr_start,
+                                end: i,
+                            });
 
                             // =
-                            while i < b.len() && b[i] == b' ' { i += 1; }
-                            if at(b, i) == b'=' {
-                                tokens.push(Token { kind: TokenKind::Operator, start: i, end: i + 1 });
+                            while i < b.len() && b[i] == b' ' {
                                 i += 1;
-                                while i < b.len() && b[i] == b' ' { i += 1; }
+                            }
+                            if at(b, i) == b'=' {
+                                tokens.push(Token {
+                                    kind: TokenKind::Operator,
+                                    start: i,
+                                    end: i + 1,
+                                });
+                                i += 1;
+                                while i < b.len() && b[i] == b' ' {
+                                    i += 1;
+                                }
                                 // Attribute value
                                 if at(b, i) == b'"' || at(b, i) == b'\'' {
                                     let q = b[i];
                                     let vs = i;
                                     i += 1;
-                                    while i < b.len() && b[i] != q { i += 1; }
-                                    if i < b.len() { i += 1; }
-                                    tokens.push(Token { kind: TokenKind::String, start: vs, end: i });
+                                    while i < b.len() && b[i] != q {
+                                        i += 1;
+                                    }
+                                    if i < b.len() {
+                                        i += 1;
+                                    }
+                                    tokens.push(Token {
+                                        kind: TokenKind::String,
+                                        start: vs,
+                                        end: i,
+                                    });
                                 } else {
                                     // Unquoted value
                                     let vs = i;
-                                    while i < b.len() && b[i] != b' ' && b[i] != b'>' && b[i] != b'/' {
+                                    while i < b.len()
+                                        && b[i] != b' '
+                                        && b[i] != b'>'
+                                        && b[i] != b'/'
+                                    {
                                         i += 1;
                                     }
                                     if i > vs {
-                                        tokens.push(Token { kind: TokenKind::String, start: vs, end: i });
+                                        tokens.push(Token {
+                                            kind: TokenKind::String,
+                                            start: vs,
+                                            end: i,
+                                        });
                                     }
                                 }
                             }
@@ -96,7 +156,11 @@ impl Scanner for HtmlScanner {
                     }
                     // Closing >
                     if i < b.len() && b[i] == b'>' {
-                        tokens.push(Token { kind: TokenKind::Punctuation, start: i, end: i + 1 });
+                        tokens.push(Token {
+                            kind: TokenKind::Punctuation,
+                            start: i,
+                            end: i + 1,
+                        });
                         i += 1;
                     }
                     continue;

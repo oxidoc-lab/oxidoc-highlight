@@ -23,7 +23,11 @@ impl Scanner for JsonScanner {
 
             // JSONC comments
             if let Some(end) = scan_c_comment(b, i) {
-                tokens.push(Token { kind: TokenKind::Comment, start: i, end });
+                tokens.push(Token {
+                    kind: TokenKind::Comment,
+                    start: i,
+                    end,
+                });
                 i = end;
                 continue;
             }
@@ -38,7 +42,11 @@ impl Scanner for JsonScanner {
                     } else {
                         TokenKind::String
                     };
-                    tokens.push(Token { kind, start: i, end });
+                    tokens.push(Token {
+                        kind,
+                        start: i,
+                        end,
+                    });
                     i = end;
                     continue;
                 }
@@ -47,9 +55,15 @@ impl Scanner for JsonScanner {
             // Numbers
             if c.is_ascii_digit() || (c == b'-' && at(b, i + 1).is_ascii_digit()) {
                 let start = i;
-                if c == b'-' { i += 1; }
+                if c == b'-' {
+                    i += 1;
+                }
                 if let Some(end) = scan_number(b, i) {
-                    tokens.push(Token { kind: TokenKind::Number, start, end });
+                    tokens.push(Token {
+                        kind: TokenKind::Number,
+                        start,
+                        end,
+                    });
                     i = end;
                     continue;
                 }
@@ -62,14 +76,22 @@ impl Scanner for JsonScanner {
                     b"true" | b"false" | b"null" => TokenKind::Keyword,
                     _ => TokenKind::Plain,
                 };
-                tokens.push(Token { kind, start: i, end });
+                tokens.push(Token {
+                    kind,
+                    start: i,
+                    end,
+                });
                 i = end;
                 continue;
             }
 
             // Punctuation
             if matches!(c, b'{' | b'}' | b'[' | b']' | b':' | b',') {
-                tokens.push(Token { kind: TokenKind::Punctuation, start: i, end: i + 1 });
+                tokens.push(Token {
+                    kind: TokenKind::Punctuation,
+                    start: i,
+                    end: i + 1,
+                });
                 i += 1;
                 continue;
             }

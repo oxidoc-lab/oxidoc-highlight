@@ -4,18 +4,67 @@ use crate::token::{Token, TokenKind};
 pub struct BashScanner;
 
 const KEYWORDS: &[&[u8]] = &[
-    b"if", b"then", b"else", b"elif", b"fi", b"for", b"while", b"until", b"do", b"done",
-    b"case", b"esac", b"in", b"function", b"select", b"time", b"coproc",
-    b"return", b"exit", b"break", b"continue", b"declare", b"local", b"export",
-    b"readonly", b"typeset", b"unset", b"shift", b"trap", b"eval", b"exec",
-    b"source", b"set",
+    b"if",
+    b"then",
+    b"else",
+    b"elif",
+    b"fi",
+    b"for",
+    b"while",
+    b"until",
+    b"do",
+    b"done",
+    b"case",
+    b"esac",
+    b"in",
+    b"function",
+    b"select",
+    b"time",
+    b"coproc",
+    b"return",
+    b"exit",
+    b"break",
+    b"continue",
+    b"declare",
+    b"local",
+    b"export",
+    b"readonly",
+    b"typeset",
+    b"unset",
+    b"shift",
+    b"trap",
+    b"eval",
+    b"exec",
+    b"source",
+    b"set",
 ];
 
 const BUILTINS: &[&[u8]] = &[
-    b"echo", b"printf", b"read", b"cd", b"pwd", b"pushd", b"popd", b"dirs",
-    b"test", b"true", b"false", b"alias", b"unalias", b"type", b"which",
-    b"command", b"builtin", b"enable", b"help", b"hash", b"getopts",
-    b"let", b"shopt", b"complete", b"compgen",
+    b"echo",
+    b"printf",
+    b"read",
+    b"cd",
+    b"pwd",
+    b"pushd",
+    b"popd",
+    b"dirs",
+    b"test",
+    b"true",
+    b"false",
+    b"alias",
+    b"unalias",
+    b"type",
+    b"which",
+    b"command",
+    b"builtin",
+    b"enable",
+    b"help",
+    b"hash",
+    b"getopts",
+    b"let",
+    b"shopt",
+    b"complete",
+    b"compgen",
 ];
 
 fn at(b: &[u8], i: usize) -> u8 {
@@ -41,7 +90,11 @@ impl Scanner for BashScanner {
                 // But not $# or ${#...}
                 if i == 0 || !matches!(at(b, i - 1), b'$' | b'{') {
                     if let Some(end) = scan_hash_comment(b, i) {
-                        tokens.push(Token { kind: TokenKind::Comment, start: i, end });
+                        tokens.push(Token {
+                            kind: TokenKind::Comment,
+                            start: i,
+                            end,
+                        });
                         i = end;
                         continue;
                     }
@@ -51,7 +104,11 @@ impl Scanner for BashScanner {
             // Heredoc (basic: <<EOF ... EOF)
             if c == b'<' && at(b, i + 1) == b'<' && at(b, i + 2) != b'<' {
                 if let Some(end) = scan_heredoc(b, i) {
-                    tokens.push(Token { kind: TokenKind::String, start: i, end });
+                    tokens.push(Token {
+                        kind: TokenKind::String,
+                        start: i,
+                        end,
+                    });
                     i = end;
                     continue;
                 }
@@ -60,13 +117,21 @@ impl Scanner for BashScanner {
             // Strings
             if c == b'"' {
                 let end = scan_bash_double_string(b, i);
-                tokens.push(Token { kind: TokenKind::String, start: i, end });
+                tokens.push(Token {
+                    kind: TokenKind::String,
+                    start: i,
+                    end,
+                });
                 i = end;
                 continue;
             }
             if c == b'\'' {
                 if let Some(end) = scan_single_string(b, i) {
-                    tokens.push(Token { kind: TokenKind::String, start: i, end });
+                    tokens.push(Token {
+                        kind: TokenKind::String,
+                        start: i,
+                        end,
+                    });
                     i = end;
                     continue;
                 }
@@ -82,36 +147,68 @@ impl Scanner for BashScanner {
                     while i < b.len() && b[i] != b'}' {
                         i += 1;
                     }
-                    if i < b.len() { i += 1; }
-                    tokens.push(Token { kind: TokenKind::Variable, start, end: i });
+                    if i < b.len() {
+                        i += 1;
+                    }
+                    tokens.push(Token {
+                        kind: TokenKind::Variable,
+                        start,
+                        end: i,
+                    });
                     continue;
                 } else if at(b, i) == b'(' {
                     // $(...) — command substitution
                     i += 1;
                     let mut depth = 1u32;
                     while i < b.len() && depth > 0 {
-                        if b[i] == b'(' { depth += 1; }
-                        if b[i] == b')' { depth -= 1; }
+                        if b[i] == b'(' {
+                            depth += 1;
+                        }
+                        if b[i] == b')' {
+                            depth -= 1;
+                        }
                         i += 1;
                     }
-                    tokens.push(Token { kind: TokenKind::Variable, start, end: i });
+                    tokens.push(Token {
+                        kind: TokenKind::Variable,
+                        start,
+                        end: i,
+                    });
                     continue;
-                } else if at(b, i).is_ascii_alphanumeric() || at(b, i) == b'_' || matches!(at(b, i), b'?' | b'!' | b'@' | b'#' | b'*' | b'-' | b'$' | b'0'..=b'9') {
+                } else if at(b, i).is_ascii_alphanumeric()
+                    || at(b, i) == b'_'
+                    || matches!(
+                        at(b, i),
+                        b'?' | b'!' | b'@' | b'#' | b'*' | b'-' | b'$' | b'0'..=b'9'
+                    )
+                {
                     while i < b.len() && (b[i].is_ascii_alphanumeric() || b[i] == b'_') {
                         i += 1;
                     }
-                    tokens.push(Token { kind: TokenKind::Variable, start, end: i });
+                    tokens.push(Token {
+                        kind: TokenKind::Variable,
+                        start,
+                        end: i,
+                    });
                     continue;
                 }
                 // Lone $
-                tokens.push(Token { kind: TokenKind::Operator, start, end: i });
+                tokens.push(Token {
+                    kind: TokenKind::Operator,
+                    start,
+                    end: i,
+                });
                 continue;
             }
 
             // Numbers (only at word boundary)
             if c.is_ascii_digit() && (i == 0 || !at(b, i - 1).is_ascii_alphanumeric()) {
                 if let Some(end) = scan_number(b, i) {
-                    tokens.push(Token { kind: TokenKind::Number, start: i, end });
+                    tokens.push(Token {
+                        kind: TokenKind::Number,
+                        start: i,
+                        end,
+                    });
                     i = end;
                     continue;
                 }
@@ -128,7 +225,11 @@ impl Scanner for BashScanner {
                 } else {
                     TokenKind::Plain
                 };
-                tokens.push(Token { kind, start: i, end });
+                tokens.push(Token {
+                    kind,
+                    start: i,
+                    end,
+                });
                 i = end;
                 continue;
             }
@@ -138,18 +239,27 @@ impl Scanner for BashScanner {
                 let start = i;
                 // Handle 2-char: ||, &&, >>, <<, >=, etc
                 let n = at(b, i + 1);
-                if (c == b'|' && n == b'|') || (c == b'&' && n == b'&') || (c == b'>' && n == b'>') {
+                if (c == b'|' && n == b'|') || (c == b'&' && n == b'&') || (c == b'>' && n == b'>')
+                {
                     i += 2;
                 } else {
                     i += 1;
                 }
-                tokens.push(Token { kind: TokenKind::Operator, start, end: i });
+                tokens.push(Token {
+                    kind: TokenKind::Operator,
+                    start,
+                    end: i,
+                });
                 continue;
             }
 
             // Punctuation
             if let Some(end) = scan_punctuation(b, i) {
-                tokens.push(Token { kind: TokenKind::Punctuation, start: i, end });
+                tokens.push(Token {
+                    kind: TokenKind::Punctuation,
+                    start: i,
+                    end,
+                });
                 i = end;
                 continue;
             }
@@ -180,29 +290,45 @@ fn scan_bash_double_string(b: &[u8], pos: usize) -> usize {
 fn scan_heredoc(b: &[u8], pos: usize) -> Option<usize> {
     let mut i = pos + 2;
     // Skip optional -
-    if at(b, i) == b'-' { i += 1; }
+    if at(b, i) == b'-' {
+        i += 1;
+    }
     // Skip whitespace
-    while i < b.len() && b[i] == b' ' { i += 1; }
+    while i < b.len() && b[i] == b' ' {
+        i += 1;
+    }
     // Get delimiter (may be quoted)
     let strip_quotes = at(b, i) == b'\'' || at(b, i) == b'"';
-    if strip_quotes { i += 1; }
+    if strip_quotes {
+        i += 1;
+    }
     let delim_start = i;
     while i < b.len() && (b[i].is_ascii_alphanumeric() || b[i] == b'_') {
         i += 1;
     }
-    if i == delim_start { return None; }
+    if i == delim_start {
+        return None;
+    }
     let delim = &b[delim_start..i];
-    if strip_quotes && i < b.len() { i += 1; } // closing quote
+    if strip_quotes && i < b.len() {
+        i += 1;
+    } // closing quote
 
     // Skip to next line
-    while i < b.len() && b[i] != b'\n' { i += 1; }
-    if i < b.len() { i += 1; }
+    while i < b.len() && b[i] != b'\n' {
+        i += 1;
+    }
+    if i < b.len() {
+        i += 1;
+    }
 
     // Find closing delimiter on its own line
     while i < b.len() {
         let line_start = i;
         // Skip leading whitespace/tabs
-        while i < b.len() && (b[i] == b' ' || b[i] == b'\t') { i += 1; }
+        while i < b.len() && (b[i] == b' ' || b[i] == b'\t') {
+            i += 1;
+        }
         if b[i..].starts_with(delim) {
             let after = i + delim.len();
             if after >= b.len() || b[after] == b'\n' || b[after] == b'\r' {
@@ -210,9 +336,15 @@ fn scan_heredoc(b: &[u8], pos: usize) -> Option<usize> {
             }
         }
         // Skip to next line
-        while i < b.len() && b[i] != b'\n' { i += 1; }
-        if i < b.len() { i += 1; }
-        if i == line_start { break; } // safety
+        while i < b.len() && b[i] != b'\n' {
+            i += 1;
+        }
+        if i < b.len() {
+            i += 1;
+        }
+        if i == line_start {
+            break;
+        } // safety
     }
     Some(b.len())
 }

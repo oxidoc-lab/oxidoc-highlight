@@ -1,5 +1,5 @@
-use crate::token::{Token, TokenKind};
 use crate::scanner::Scanner;
+use crate::token::{Token, TokenKind};
 
 pub struct DiffScanner;
 
@@ -16,11 +16,17 @@ impl Scanner for DiffScanner {
         while i < b.len() {
             let line_start = i;
             // Find end of line
-            while i < b.len() && b[i] != b'\n' { i += 1; }
+            while i < b.len() && b[i] != b'\n' {
+                i += 1;
+            }
             let line_end = i;
-            if i < b.len() { i += 1; } // consume \n
+            if i < b.len() {
+                i += 1;
+            } // consume \n
 
-            if line_start == line_end { continue; }
+            if line_start == line_end {
+                continue;
+            }
 
             let c = b[line_start];
             let kind = if c == b'+' {
@@ -37,13 +43,19 @@ impl Scanner for DiffScanner {
                 }
             } else if c == b'@' && at(b, line_start + 1) == b'@' {
                 TokenKind::Attr // @@ hunk header
-            } else if b[line_start..line_end].starts_with(b"diff ") || b[line_start..line_end].starts_with(b"index ") {
+            } else if b[line_start..line_end].starts_with(b"diff ")
+                || b[line_start..line_end].starts_with(b"index ")
+            {
                 TokenKind::Keyword
             } else {
                 TokenKind::Plain
             };
 
-            tokens.push(Token { kind, start: line_start, end: line_end });
+            tokens.push(Token {
+                kind,
+                start: line_start,
+                end: line_end,
+            });
         }
 
         tokens
@@ -54,16 +66,26 @@ impl Scanner for DiffScanner {
 mod tests {
     use super::*;
     use crate::token::render;
-    fn hl(code: &str) -> String { render(code, &DiffScanner.scan(code)) }
+    fn hl(code: &str) -> String {
+        render(code, &DiffScanner.scan(code))
+    }
 
     #[test]
-    fn added() { assert!(hl("+added line").contains("tok-string")); }
+    fn added() {
+        assert!(hl("+added line").contains("tok-string"));
+    }
     #[test]
-    fn removed() { assert!(hl("-removed line").contains("tok-comment")); }
+    fn removed() {
+        assert!(hl("-removed line").contains("tok-comment"));
+    }
     #[test]
-    fn header() { assert!(hl("@@ -1,3 +1,4 @@").contains("tok-attr")); }
+    fn header() {
+        assert!(hl("@@ -1,3 +1,4 @@").contains("tok-attr"));
+    }
     #[test]
-    fn diff_header() { assert!(hl("diff --git a/f b/f").contains("tok-keyword")); }
+    fn diff_header() {
+        assert!(hl("diff --git a/f b/f").contains("tok-keyword"));
+    }
     #[test]
     fn context() {
         let out = hl(" context line");

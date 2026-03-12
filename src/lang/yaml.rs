@@ -31,7 +31,11 @@ impl Scanner for YamlScanner {
             if line_start && (b[i..].starts_with(b"---") || b[i..].starts_with(b"...")) {
                 let start = i;
                 i += 3;
-                tokens.push(Token { kind: TokenKind::Keyword, start, end: i });
+                tokens.push(Token {
+                    kind: TokenKind::Keyword,
+                    start,
+                    end: i,
+                });
                 line_start = false;
                 continue;
             }
@@ -39,7 +43,11 @@ impl Scanner for YamlScanner {
             // Comments
             if c == b'#' {
                 if let Some(end) = scan_hash_comment(b, i) {
-                    tokens.push(Token { kind: TokenKind::Comment, start: i, end });
+                    tokens.push(Token {
+                        kind: TokenKind::Comment,
+                        start: i,
+                        end,
+                    });
                     i = end;
                     continue;
                 }
@@ -48,7 +56,11 @@ impl Scanner for YamlScanner {
             // Strings
             if c == b'"' {
                 if let Some(end) = scan_double_string(b, i) {
-                    tokens.push(Token { kind: TokenKind::String, start: i, end });
+                    tokens.push(Token {
+                        kind: TokenKind::String,
+                        start: i,
+                        end,
+                    });
                     i = end;
                     line_start = false;
                     continue;
@@ -56,7 +68,11 @@ impl Scanner for YamlScanner {
             }
             if c == b'\'' {
                 if let Some(end) = scan_single_string(b, i) {
-                    tokens.push(Token { kind: TokenKind::String, start: i, end });
+                    tokens.push(Token {
+                        kind: TokenKind::String,
+                        start: i,
+                        end,
+                    });
                     i = end;
                     line_start = false;
                     continue;
@@ -66,24 +82,49 @@ impl Scanner for YamlScanner {
             // Key: value pattern — scan identifier then check for :
             if c.is_ascii_alphanumeric() || c == b'_' || c == b'-' {
                 let start = i;
-                while i < b.len() && (b[i].is_ascii_alphanumeric() || b[i] == b'_' || b[i] == b'-' || b[i] == b'.') {
+                while i < b.len()
+                    && (b[i].is_ascii_alphanumeric()
+                        || b[i] == b'_'
+                        || b[i] == b'-'
+                        || b[i] == b'.')
+                {
                     i += 1;
                 }
                 let ident = &b[start..i];
                 let after = skip_whitespace_no_newline(b, i);
 
-                if at(b, after) == b':' && (at(b, after + 1) == b' ' || at(b, after + 1) == b'\n' || after + 1 >= b.len()) {
-                    tokens.push(Token { kind: TokenKind::Property, start, end: i });
+                if at(b, after) == b':'
+                    && (at(b, after + 1) == b' '
+                        || at(b, after + 1) == b'\n'
+                        || after + 1 >= b.len())
+                {
+                    tokens.push(Token {
+                        kind: TokenKind::Property,
+                        start,
+                        end: i,
+                    });
                 } else {
                     // Value keywords
                     let kind = match ident {
-                        b"true" | b"false" | b"yes" | b"no" | b"on" | b"off" | b"True" | b"False" | b"Yes" | b"No" => TokenKind::Keyword,
+                        b"true" | b"false" | b"yes" | b"no" | b"on" | b"off" | b"True"
+                        | b"False" | b"Yes" | b"No" => TokenKind::Keyword,
                         b"null" | b"Null" | b"~" => TokenKind::Keyword,
                         _ => {
                             // Try number: must start with digit or sign followed by digit
                             if !ident.is_empty()
-                                && (ident[0].is_ascii_digit() || ((ident[0] == b'-' || ident[0] == b'+') && ident.len() > 1 && ident[1].is_ascii_digit()))
-                                && ident[1..].iter().all(|&c| c.is_ascii_digit() || c == b'.' || c == b'e' || c == b'E' || c == b'_' || c == b'+' || c == b'-')
+                                && (ident[0].is_ascii_digit()
+                                    || ((ident[0] == b'-' || ident[0] == b'+')
+                                        && ident.len() > 1
+                                        && ident[1].is_ascii_digit()))
+                                && ident[1..].iter().all(|&c| {
+                                    c.is_ascii_digit()
+                                        || c == b'.'
+                                        || c == b'e'
+                                        || c == b'E'
+                                        || c == b'_'
+                                        || c == b'+'
+                                        || c == b'-'
+                                })
                             {
                                 TokenKind::Number
                             } else {
@@ -91,7 +132,11 @@ impl Scanner for YamlScanner {
                             }
                         }
                     };
-                    tokens.push(Token { kind, start, end: i });
+                    tokens.push(Token {
+                        kind,
+                        start,
+                        end: i,
+                    });
                 }
                 line_start = false;
                 continue;
@@ -99,7 +144,11 @@ impl Scanner for YamlScanner {
 
             // Punctuation: : - [ ] { } ,
             if matches!(c, b':' | b'-' | b'[' | b']' | b'{' | b'}' | b',') {
-                tokens.push(Token { kind: TokenKind::Punctuation, start: i, end: i + 1 });
+                tokens.push(Token {
+                    kind: TokenKind::Punctuation,
+                    start: i,
+                    end: i + 1,
+                });
                 i += 1;
                 line_start = false;
                 continue;
@@ -109,10 +158,15 @@ impl Scanner for YamlScanner {
             if c == b'&' || c == b'*' {
                 let start = i;
                 i += 1;
-                while i < b.len() && (b[i].is_ascii_alphanumeric() || b[i] == b'_' || b[i] == b'-') {
+                while i < b.len() && (b[i].is_ascii_alphanumeric() || b[i] == b'_' || b[i] == b'-')
+                {
                     i += 1;
                 }
-                tokens.push(Token { kind: TokenKind::Variable, start, end: i });
+                tokens.push(Token {
+                    kind: TokenKind::Variable,
+                    start,
+                    end: i,
+                });
                 line_start = false;
                 continue;
             }
@@ -124,7 +178,11 @@ impl Scanner for YamlScanner {
                 while i < b.len() && !b[i].is_ascii_whitespace() {
                     i += 1;
                 }
-                tokens.push(Token { kind: TokenKind::Attr, start, end: i });
+                tokens.push(Token {
+                    kind: TokenKind::Attr,
+                    start,
+                    end: i,
+                });
                 line_start = false;
                 continue;
             }

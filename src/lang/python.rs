@@ -4,28 +4,123 @@ use crate::token::{Token, TokenKind};
 pub struct PythonScanner;
 
 const KEYWORDS: &[&[u8]] = &[
-    b"False", b"None", b"True", b"and", b"as", b"assert", b"async", b"await",
-    b"break", b"class", b"continue", b"def", b"del", b"elif", b"else", b"except",
-    b"finally", b"for", b"from", b"global", b"if", b"import", b"in", b"is",
-    b"lambda", b"nonlocal", b"not", b"or", b"pass", b"raise", b"return", b"try",
-    b"while", b"with", b"yield",
+    b"False",
+    b"None",
+    b"True",
+    b"and",
+    b"as",
+    b"assert",
+    b"async",
+    b"await",
+    b"break",
+    b"class",
+    b"continue",
+    b"def",
+    b"del",
+    b"elif",
+    b"else",
+    b"except",
+    b"finally",
+    b"for",
+    b"from",
+    b"global",
+    b"if",
+    b"import",
+    b"in",
+    b"is",
+    b"lambda",
+    b"nonlocal",
+    b"not",
+    b"or",
+    b"pass",
+    b"raise",
+    b"return",
+    b"try",
+    b"while",
+    b"with",
+    b"yield",
 ];
 
 const BUILTINS: &[&[u8]] = &[
-    b"print", b"len", b"range", b"type", b"int", b"str", b"float", b"bool",
-    b"list", b"dict", b"set", b"tuple", b"enumerate", b"zip", b"map", b"filter",
-    b"sorted", b"reversed", b"min", b"max", b"sum", b"abs", b"all", b"any",
-    b"isinstance", b"issubclass", b"hasattr", b"getattr", b"setattr", b"delattr",
-    b"open", b"input", b"repr", b"super", b"property", b"classmethod", b"staticmethod",
-    b"iter", b"next", b"id", b"hash", b"callable", b"vars", b"dir", b"help",
-    b"hex", b"oct", b"bin", b"ord", b"chr", b"format",
+    b"print",
+    b"len",
+    b"range",
+    b"type",
+    b"int",
+    b"str",
+    b"float",
+    b"bool",
+    b"list",
+    b"dict",
+    b"set",
+    b"tuple",
+    b"enumerate",
+    b"zip",
+    b"map",
+    b"filter",
+    b"sorted",
+    b"reversed",
+    b"min",
+    b"max",
+    b"sum",
+    b"abs",
+    b"all",
+    b"any",
+    b"isinstance",
+    b"issubclass",
+    b"hasattr",
+    b"getattr",
+    b"setattr",
+    b"delattr",
+    b"open",
+    b"input",
+    b"repr",
+    b"super",
+    b"property",
+    b"classmethod",
+    b"staticmethod",
+    b"iter",
+    b"next",
+    b"id",
+    b"hash",
+    b"callable",
+    b"vars",
+    b"dir",
+    b"help",
+    b"hex",
+    b"oct",
+    b"bin",
+    b"ord",
+    b"chr",
+    b"format",
 ];
 
 const TYPE_NAMES: &[&[u8]] = &[
-    b"int", b"str", b"float", b"bool", b"list", b"dict", b"set", b"tuple",
-    b"bytes", b"bytearray", b"memoryview", b"complex", b"frozenset",
-    b"Optional", b"Union", b"List", b"Dict", b"Set", b"Tuple", b"Any",
-    b"Callable", b"Iterator", b"Generator", b"Coroutine", b"Type",
+    b"int",
+    b"str",
+    b"float",
+    b"bool",
+    b"list",
+    b"dict",
+    b"set",
+    b"tuple",
+    b"bytes",
+    b"bytearray",
+    b"memoryview",
+    b"complex",
+    b"frozenset",
+    b"Optional",
+    b"Union",
+    b"List",
+    b"Dict",
+    b"Set",
+    b"Tuple",
+    b"Any",
+    b"Callable",
+    b"Iterator",
+    b"Generator",
+    b"Coroutine",
+    b"Type",
 ];
 
 fn at(b: &[u8], i: usize) -> u8 {
@@ -50,7 +145,11 @@ impl Scanner for PythonScanner {
             // Comments
             if c == b'#' {
                 if let Some(end) = scan_hash_comment(b, i) {
-                    tokens.push(Token { kind: TokenKind::Comment, start: i, end });
+                    tokens.push(Token {
+                        kind: TokenKind::Comment,
+                        start: i,
+                        end,
+                    });
                     prev_kind = Some(TokenKind::Comment);
                     i = end;
                     continue;
@@ -70,7 +169,11 @@ impl Scanner for PythonScanner {
                             break;
                         }
                     }
-                    tokens.push(Token { kind: TokenKind::Attr, start, end: e });
+                    tokens.push(Token {
+                        kind: TokenKind::Attr,
+                        start,
+                        end: e,
+                    });
                     prev_kind = Some(TokenKind::Attr);
                     i = e;
                     continue;
@@ -80,18 +183,24 @@ impl Scanner for PythonScanner {
             // Triple-quoted strings (must check before single/double)
             if (c == b'"' || c == b'\'') && at(b, i + 1) == c && at(b, i + 2) == c {
                 let end = scan_triple_string(b, i, c);
-                tokens.push(Token { kind: TokenKind::String, start: i, end });
+                tokens.push(Token {
+                    kind: TokenKind::String,
+                    start: i,
+                    end,
+                });
                 prev_kind = Some(TokenKind::String);
                 i = end;
                 continue;
             }
 
             // f-strings: f"...", f'...', f"""...""", f'''...'''
-            if c == b'f' || c == b'F' || c == b'b' || c == b'B' || c == b'r' || c == b'R'  {
+            if c == b'f' || c == b'F' || c == b'b' || c == b'B' || c == b'r' || c == b'R' {
                 // Handle prefixed strings: f"", b"", r"", rb"", br"", etc.
                 let mut prefix_len = 0;
                 let mut j = i;
-                while j < b.len() && matches!(b[j], b'f' | b'F' | b'b' | b'B' | b'r' | b'R' | b'u' | b'U') {
+                while j < b.len()
+                    && matches!(b[j], b'f' | b'F' | b'b' | b'B' | b'r' | b'R' | b'u' | b'U')
+                {
                     j += 1;
                     prefix_len += 1;
                     if prefix_len > 3 {
@@ -102,13 +211,21 @@ impl Scanner for PythonScanner {
                     let q = b[j];
                     if at(b, j + 1) == q && at(b, j + 2) == q {
                         let end = scan_triple_string(b, j, q);
-                        tokens.push(Token { kind: TokenKind::String, start: i, end });
+                        tokens.push(Token {
+                            kind: TokenKind::String,
+                            start: i,
+                            end,
+                        });
                         prev_kind = Some(TokenKind::String);
                         i = end;
                         continue;
                     }
                     if let Some(end) = scan_quoted_string(b, j, q) {
-                        tokens.push(Token { kind: TokenKind::String, start: i, end });
+                        tokens.push(Token {
+                            kind: TokenKind::String,
+                            start: i,
+                            end,
+                        });
                         prev_kind = Some(TokenKind::String);
                         i = end;
                         continue;
@@ -119,7 +236,11 @@ impl Scanner for PythonScanner {
             // Regular strings
             if c == b'"' {
                 if let Some(end) = scan_double_string(b, i) {
-                    tokens.push(Token { kind: TokenKind::String, start: i, end });
+                    tokens.push(Token {
+                        kind: TokenKind::String,
+                        start: i,
+                        end,
+                    });
                     prev_kind = Some(TokenKind::String);
                     i = end;
                     continue;
@@ -127,7 +248,11 @@ impl Scanner for PythonScanner {
             }
             if c == b'\'' {
                 if let Some(end) = scan_single_string(b, i) {
-                    tokens.push(Token { kind: TokenKind::String, start: i, end });
+                    tokens.push(Token {
+                        kind: TokenKind::String,
+                        start: i,
+                        end,
+                    });
                     prev_kind = Some(TokenKind::String);
                     i = end;
                     continue;
@@ -136,7 +261,11 @@ impl Scanner for PythonScanner {
 
             // Numbers
             if let Some(end) = scan_number(b, i) {
-                tokens.push(Token { kind: TokenKind::Number, start: i, end });
+                tokens.push(Token {
+                    kind: TokenKind::Number,
+                    start: i,
+                    end,
+                });
                 prev_kind = Some(TokenKind::Number);
                 i = end;
                 continue;
@@ -158,12 +287,23 @@ impl Scanner for PythonScanner {
                     TokenKind::Builtin
                 } else if is_function_call(b, end) {
                     TokenKind::Function
-                } else if matches!(prev_kind, Some(TokenKind::Punctuation)) && i >= 1 && b[i - 1] == b'.' {
-                    if is_function_call(b, end) { TokenKind::Function } else { TokenKind::Property }
+                } else if matches!(prev_kind, Some(TokenKind::Punctuation))
+                    && i >= 1
+                    && b[i - 1] == b'.'
+                {
+                    if is_function_call(b, end) {
+                        TokenKind::Function
+                    } else {
+                        TokenKind::Property
+                    }
                 } else {
                     TokenKind::Plain
                 };
-                tokens.push(Token { kind, start: i, end });
+                tokens.push(Token {
+                    kind,
+                    start: i,
+                    end,
+                });
                 prev_kind = Some(kind);
                 i = end;
                 continue;
@@ -171,7 +311,11 @@ impl Scanner for PythonScanner {
 
             // Operators
             if let Some(end) = scan_operator(b, i) {
-                tokens.push(Token { kind: TokenKind::Operator, start: i, end });
+                tokens.push(Token {
+                    kind: TokenKind::Operator,
+                    start: i,
+                    end,
+                });
                 prev_kind = Some(TokenKind::Operator);
                 i = end;
                 continue;
@@ -179,7 +323,11 @@ impl Scanner for PythonScanner {
 
             // Punctuation
             if let Some(end) = scan_punctuation(b, i) {
-                tokens.push(Token { kind: TokenKind::Punctuation, start: i, end });
+                tokens.push(Token {
+                    kind: TokenKind::Punctuation,
+                    start: i,
+                    end,
+                });
                 prev_kind = Some(TokenKind::Punctuation);
                 i = end;
                 continue;

@@ -178,9 +178,20 @@ pub fn scan_number(b: &[u8], pos: usize) -> Option<usize> {
         let suffix = &b[suffix_start..i];
         let known = matches!(
             suffix,
-            b"i8" | b"i16" | b"i32" | b"i64" | b"i128" | b"isize"
-                | b"u8" | b"u16" | b"u32" | b"u64" | b"u128" | b"usize"
-                | b"f32" | b"f64"
+            b"i8"
+                | b"i16"
+                | b"i32"
+                | b"i64"
+                | b"i128"
+                | b"isize"
+                | b"u8"
+                | b"u16"
+                | b"u32"
+                | b"u64"
+                | b"u128"
+                | b"usize"
+                | b"f32"
+                | b"f64"
                 | b"n" // BigInt in JS
         );
         if !known {
@@ -281,8 +292,19 @@ pub fn scan_operator(b: &[u8], pos: usize) -> Option<usize> {
     // 1-char operators
     if matches!(
         c,
-        b'=' | b'+' | b'-' | b'*' | b'/' | b'%' | b'!' | b'<' | b'>' | b'&' | b'|' | b'^'
-            | b'~' | b'?'
+        b'=' | b'+'
+            | b'-'
+            | b'*'
+            | b'/'
+            | b'%'
+            | b'!'
+            | b'<'
+            | b'>'
+            | b'&'
+            | b'|'
+            | b'^'
+            | b'~'
+            | b'?'
     ) {
         return Some(pos + 1);
     }

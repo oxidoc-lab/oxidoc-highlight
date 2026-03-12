@@ -7,31 +7,119 @@ pub struct JsScanner {
 }
 
 const JS_KEYWORDS: &[&[u8]] = &[
-    b"async", b"await", b"break", b"case", b"catch", b"class", b"const", b"continue",
-    b"debugger", b"default", b"delete", b"do", b"else", b"export", b"extends", b"false",
-    b"finally", b"for", b"from", b"function", b"if", b"import", b"in", b"instanceof",
-    b"let", b"new", b"null", b"of", b"return", b"static", b"switch", b"throw", b"true",
-    b"try", b"typeof", b"undefined", b"var", b"void", b"while", b"with", b"yield",
+    b"async",
+    b"await",
+    b"break",
+    b"case",
+    b"catch",
+    b"class",
+    b"const",
+    b"continue",
+    b"debugger",
+    b"default",
+    b"delete",
+    b"do",
+    b"else",
+    b"export",
+    b"extends",
+    b"false",
+    b"finally",
+    b"for",
+    b"from",
+    b"function",
+    b"if",
+    b"import",
+    b"in",
+    b"instanceof",
+    b"let",
+    b"new",
+    b"null",
+    b"of",
+    b"return",
+    b"static",
+    b"switch",
+    b"throw",
+    b"true",
+    b"try",
+    b"typeof",
+    b"undefined",
+    b"var",
+    b"void",
+    b"while",
+    b"with",
+    b"yield",
 ];
 
 const TS_EXTRA_KEYWORDS: &[&[u8]] = &[
-    b"abstract", b"as", b"asserts", b"declare", b"enum", b"implements", b"interface",
-    b"is", b"keyof", b"namespace", b"override", b"private", b"protected", b"public",
-    b"readonly", b"satisfies", b"type", b"using", b"infer",
+    b"abstract",
+    b"as",
+    b"asserts",
+    b"declare",
+    b"enum",
+    b"implements",
+    b"interface",
+    b"is",
+    b"keyof",
+    b"namespace",
+    b"override",
+    b"private",
+    b"protected",
+    b"public",
+    b"readonly",
+    b"satisfies",
+    b"type",
+    b"using",
+    b"infer",
 ];
 
 const BUILTINS: &[&[u8]] = &[
-    b"console", b"Math", b"JSON", b"Object", b"Array", b"Map", b"Set", b"Promise",
-    b"Date", b"RegExp", b"Error", b"parseInt", b"parseFloat", b"isNaN", b"isFinite",
-    b"setTimeout", b"setInterval", b"clearTimeout", b"clearInterval",
-    b"require", b"module", b"exports", b"globalThis", b"window", b"document",
-    b"fetch", b"Response", b"Request", b"URL", b"URLSearchParams",
-    b"Buffer", b"process",
+    b"console",
+    b"Math",
+    b"JSON",
+    b"Object",
+    b"Array",
+    b"Map",
+    b"Set",
+    b"Promise",
+    b"Date",
+    b"RegExp",
+    b"Error",
+    b"parseInt",
+    b"parseFloat",
+    b"isNaN",
+    b"isFinite",
+    b"setTimeout",
+    b"setInterval",
+    b"clearTimeout",
+    b"clearInterval",
+    b"require",
+    b"module",
+    b"exports",
+    b"globalThis",
+    b"window",
+    b"document",
+    b"fetch",
+    b"Response",
+    b"Request",
+    b"URL",
+    b"URLSearchParams",
+    b"Buffer",
+    b"process",
 ];
 
 const TYPE_KEYWORDS: &[&[u8]] = &[
-    b"string", b"number", b"boolean", b"any", b"unknown", b"never", b"void", b"object",
-    b"symbol", b"bigint", b"undefined", b"null",
+    b"string",
+    b"number",
+    b"boolean",
+    b"any",
+    b"unknown",
+    b"never",
+    b"void",
+    b"object",
+    b"symbol",
+    b"bigint",
+    b"undefined",
+    b"null",
 ];
 
 fn at(b: &[u8], i: usize) -> u8 {
@@ -72,16 +160,28 @@ impl Scanner for JsScanner {
 
             // Comments
             if let Some(end) = scan_c_comment(b, i) {
-                tokens.push(Token { kind: TokenKind::Comment, start: i, end });
+                tokens.push(Token {
+                    kind: TokenKind::Comment,
+                    start: i,
+                    end,
+                });
                 prev_kind = Some(TokenKind::Comment);
                 i = end;
                 continue;
             }
 
             // Regex literals
-            if c == b'/' && slash_is_regex(prev_kind, prev_punct_byte) && at(b, i + 1) != b'/' && at(b, i + 1) != b'*' {
+            if c == b'/'
+                && slash_is_regex(prev_kind, prev_punct_byte)
+                && at(b, i + 1) != b'/'
+                && at(b, i + 1) != b'*'
+            {
                 if let Some(end) = scan_js_regex(b, i) {
-                    tokens.push(Token { kind: TokenKind::String, start: i, end });
+                    tokens.push(Token {
+                        kind: TokenKind::String,
+                        start: i,
+                        end,
+                    });
                     prev_kind = Some(TokenKind::String);
                     i = end;
                     continue;
@@ -91,7 +191,11 @@ impl Scanner for JsScanner {
             // Template literals
             if c == b'`' {
                 let end = scan_template_literal(b, i);
-                tokens.push(Token { kind: TokenKind::String, start: i, end });
+                tokens.push(Token {
+                    kind: TokenKind::String,
+                    start: i,
+                    end,
+                });
                 prev_kind = Some(TokenKind::String);
                 i = end;
                 continue;
@@ -100,7 +204,11 @@ impl Scanner for JsScanner {
             // Strings
             if c == b'"' {
                 if let Some(end) = scan_double_string(b, i) {
-                    tokens.push(Token { kind: TokenKind::String, start: i, end });
+                    tokens.push(Token {
+                        kind: TokenKind::String,
+                        start: i,
+                        end,
+                    });
                     prev_kind = Some(TokenKind::String);
                     i = end;
                     continue;
@@ -108,7 +216,11 @@ impl Scanner for JsScanner {
             }
             if c == b'\'' {
                 if let Some(end) = scan_single_string(b, i) {
-                    tokens.push(Token { kind: TokenKind::String, start: i, end });
+                    tokens.push(Token {
+                        kind: TokenKind::String,
+                        start: i,
+                        end,
+                    });
                     prev_kind = Some(TokenKind::String);
                     i = end;
                     continue;
@@ -129,7 +241,11 @@ impl Scanner for JsScanner {
                             break;
                         }
                     }
-                    tokens.push(Token { kind: TokenKind::Attr, start, end: e });
+                    tokens.push(Token {
+                        kind: TokenKind::Attr,
+                        start,
+                        end: e,
+                    });
                     prev_kind = Some(TokenKind::Attr);
                     i = e;
                     continue;
@@ -138,7 +254,11 @@ impl Scanner for JsScanner {
 
             // Numbers
             if let Some(end) = scan_number(b, i) {
-                tokens.push(Token { kind: TokenKind::Number, start: i, end });
+                tokens.push(Token {
+                    kind: TokenKind::Number,
+                    start: i,
+                    end,
+                });
                 prev_kind = Some(TokenKind::Number);
                 i = end;
                 continue;
@@ -146,7 +266,9 @@ impl Scanner for JsScanner {
 
             // Identifiers
             if let Some((end, ident)) = scan_ident(b, i) {
-                let kind = if is_keyword(ident, JS_KEYWORDS) || (self.typescript && is_keyword(ident, TS_EXTRA_KEYWORDS)) {
+                let kind = if is_keyword(ident, JS_KEYWORDS)
+                    || (self.typescript && is_keyword(ident, TS_EXTRA_KEYWORDS))
+                {
                     TokenKind::Keyword
                 } else if ident == b"this" || ident == b"super" {
                     TokenKind::Variable
@@ -158,7 +280,10 @@ impl Scanner for JsScanner {
                     TokenKind::Type
                 } else if is_function_call(b, end) && !was_keyword(prev_kind) {
                     TokenKind::Function
-                } else if matches!(prev_kind, Some(TokenKind::Punctuation)) && i >= 1 && b[i - 1] == b'.' {
+                } else if matches!(prev_kind, Some(TokenKind::Punctuation))
+                    && i >= 1
+                    && b[i - 1] == b'.'
+                {
                     if is_function_call(b, end) {
                         TokenKind::Function
                     } else {
@@ -167,7 +292,11 @@ impl Scanner for JsScanner {
                 } else {
                     TokenKind::Plain
                 };
-                tokens.push(Token { kind, start: i, end });
+                tokens.push(Token {
+                    kind,
+                    start: i,
+                    end,
+                });
                 prev_kind = Some(kind);
                 i = end;
                 continue;
@@ -183,7 +312,11 @@ impl Scanner for JsScanner {
                 if next == b'/' {
                     if at(b, i + 2) == b'>' {
                         // Fragment close </>
-                        tokens.push(Token { kind: TokenKind::Punctuation, start: i, end: i + 3 });
+                        tokens.push(Token {
+                            kind: TokenKind::Punctuation,
+                            start: i,
+                            end: i + 3,
+                        });
                         prev_kind = Some(TokenKind::Punctuation);
                         i += 3;
                         continue;
@@ -191,16 +324,35 @@ impl Scanner for JsScanner {
                     let name_pos = i + 2;
                     if at(b, name_pos).is_ascii_alphabetic() {
                         i = name_pos;
-                        while i < b.len() && (b[i].is_ascii_alphanumeric() || b[i] == b'_' || b[i] == b'-' || b[i] == b'.') {
+                        while i < b.len()
+                            && (b[i].is_ascii_alphanumeric()
+                                || b[i] == b'_'
+                                || b[i] == b'-'
+                                || b[i] == b'.')
+                        {
                             i += 1;
                         }
-                        let kind = if at(b, name_pos).is_ascii_uppercase() { TokenKind::Keyword } else { TokenKind::Attr };
-                        tokens.push(Token { kind, start: tag_start, end: i });
+                        let kind = if at(b, name_pos).is_ascii_uppercase() {
+                            TokenKind::Keyword
+                        } else {
+                            TokenKind::Attr
+                        };
+                        tokens.push(Token {
+                            kind,
+                            start: tag_start,
+                            end: i,
+                        });
                         prev_kind = Some(kind);
                         // Skip to >
-                        while i < b.len() && b[i] != b'>' { i += 1; }
+                        while i < b.len() && b[i] != b'>' {
+                            i += 1;
+                        }
                         if i < b.len() {
-                            tokens.push(Token { kind: TokenKind::Punctuation, start: i, end: i + 1 });
+                            tokens.push(Token {
+                                kind: TokenKind::Punctuation,
+                                start: i,
+                                end: i + 1,
+                            });
                             prev_kind = Some(TokenKind::Punctuation);
                             i += 1;
                         }
@@ -210,7 +362,11 @@ impl Scanner for JsScanner {
 
                 // Fragment open <>
                 if next == b'>' {
-                    tokens.push(Token { kind: TokenKind::Punctuation, start: i, end: i + 2 });
+                    tokens.push(Token {
+                        kind: TokenKind::Punctuation,
+                        start: i,
+                        end: i + 2,
+                    });
                     prev_kind = Some(TokenKind::Punctuation);
                     i += 2;
                     continue;
@@ -219,18 +375,38 @@ impl Scanner for JsScanner {
                 // Opening tag <Name ...> or <Name ... />
                 if next.is_ascii_alphabetic() || next == b'_' {
                     i += 1;
-                    while i < b.len() && (b[i].is_ascii_alphanumeric() || b[i] == b'_' || b[i] == b'-' || b[i] == b'.') {
+                    while i < b.len()
+                        && (b[i].is_ascii_alphanumeric()
+                            || b[i] == b'_'
+                            || b[i] == b'-'
+                            || b[i] == b'.')
+                    {
                         i += 1;
                     }
-                    let kind = if next.is_ascii_uppercase() { TokenKind::Keyword } else { TokenKind::Attr };
-                    tokens.push(Token { kind, start: tag_start, end: i });
+                    let kind = if next.is_ascii_uppercase() {
+                        TokenKind::Keyword
+                    } else {
+                        TokenKind::Attr
+                    };
+                    tokens.push(Token {
+                        kind,
+                        start: tag_start,
+                        end: i,
+                    });
                     prev_kind = Some(kind);
 
                     // Scan JSX attributes until > or />
                     while i < b.len() && b[i] != b'>' {
-                        if b[i] == b' ' || b[i] == b'\t' || b[i] == b'\n' || b[i] == b'\r' { i += 1; continue; }
+                        if b[i] == b' ' || b[i] == b'\t' || b[i] == b'\n' || b[i] == b'\r' {
+                            i += 1;
+                            continue;
+                        }
                         if b[i] == b'/' && at(b, i + 1) == b'>' {
-                            tokens.push(Token { kind: TokenKind::Punctuation, start: i, end: i + 2 });
+                            tokens.push(Token {
+                                kind: TokenKind::Punctuation,
+                                start: i,
+                                end: i + 2,
+                            });
                             prev_kind = Some(TokenKind::Punctuation);
                             i += 2;
                             break;
@@ -241,28 +417,52 @@ impl Scanner for JsScanner {
                             i += 1;
                             let mut depth = 1u32;
                             while i < b.len() && depth > 0 {
-                                if b[i] == b'{' { depth += 1; }
-                                if b[i] == b'}' { depth -= 1; }
+                                if b[i] == b'{' {
+                                    depth += 1;
+                                }
+                                if b[i] == b'}' {
+                                    depth -= 1;
+                                }
                                 i += 1;
                             }
-                            tokens.push(Token { kind: TokenKind::Plain, start: vs, end: i });
+                            tokens.push(Token {
+                                kind: TokenKind::Plain,
+                                start: vs,
+                                end: i,
+                            });
                             continue;
                         }
                         // Attribute name
                         if b[i].is_ascii_alphabetic() || b[i] == b'_' {
                             let as_ = i;
-                            while i < b.len() && (b[i].is_ascii_alphanumeric() || b[i] == b'_' || b[i] == b'-') { i += 1; }
-                            tokens.push(Token { kind: TokenKind::Attr, start: as_, end: i });
+                            while i < b.len()
+                                && (b[i].is_ascii_alphanumeric() || b[i] == b'_' || b[i] == b'-')
+                            {
+                                i += 1;
+                            }
+                            tokens.push(Token {
+                                kind: TokenKind::Attr,
+                                start: as_,
+                                end: i,
+                            });
                             // =
                             if at(b, i) == b'=' {
-                                tokens.push(Token { kind: TokenKind::Operator, start: i, end: i + 1 });
+                                tokens.push(Token {
+                                    kind: TokenKind::Operator,
+                                    start: i,
+                                    end: i + 1,
+                                });
                                 i += 1;
                                 // Value: string or {expression}
                                 if at(b, i) == b'"' || at(b, i) == b'\'' {
                                     let q = b[i];
                                     let vs = i;
                                     if let Some(end) = scan_quoted_string(b, i, q) {
-                                        tokens.push(Token { kind: TokenKind::String, start: vs, end });
+                                        tokens.push(Token {
+                                            kind: TokenKind::String,
+                                            start: vs,
+                                            end,
+                                        });
                                         i = end;
                                     }
                                 } else if at(b, i) == b'{' {
@@ -270,11 +470,19 @@ impl Scanner for JsScanner {
                                     i += 1;
                                     let mut depth = 1u32;
                                     while i < b.len() && depth > 0 {
-                                        if b[i] == b'{' { depth += 1; }
-                                        if b[i] == b'}' { depth -= 1; }
+                                        if b[i] == b'{' {
+                                            depth += 1;
+                                        }
+                                        if b[i] == b'}' {
+                                            depth -= 1;
+                                        }
                                         i += 1;
                                     }
-                                    tokens.push(Token { kind: TokenKind::Plain, start: vs, end: i });
+                                    tokens.push(Token {
+                                        kind: TokenKind::Plain,
+                                        start: vs,
+                                        end: i,
+                                    });
                                 }
                             }
                             continue;
@@ -282,7 +490,11 @@ impl Scanner for JsScanner {
                         i += 1;
                     }
                     if i < b.len() && b[i] == b'>' {
-                        tokens.push(Token { kind: TokenKind::Punctuation, start: i, end: i + 1 });
+                        tokens.push(Token {
+                            kind: TokenKind::Punctuation,
+                            start: i,
+                            end: i + 1,
+                        });
                         prev_kind = Some(TokenKind::Punctuation);
                         i += 1;
                     }
@@ -292,7 +504,11 @@ impl Scanner for JsScanner {
 
             // Arrow =>
             if c == b'=' && at(b, i + 1) == b'>' {
-                tokens.push(Token { kind: TokenKind::Operator, start: i, end: i + 2 });
+                tokens.push(Token {
+                    kind: TokenKind::Operator,
+                    start: i,
+                    end: i + 2,
+                });
                 prev_kind = Some(TokenKind::Operator);
                 i += 2;
                 continue;
@@ -300,7 +516,11 @@ impl Scanner for JsScanner {
 
             // Operators
             if let Some(end) = scan_operator(b, i) {
-                tokens.push(Token { kind: TokenKind::Operator, start: i, end });
+                tokens.push(Token {
+                    kind: TokenKind::Operator,
+                    start: i,
+                    end,
+                });
                 prev_kind = Some(TokenKind::Operator);
                 i = end;
                 continue;
@@ -309,7 +529,11 @@ impl Scanner for JsScanner {
             // Punctuation
             if let Some(end) = scan_punctuation(b, i) {
                 prev_punct_byte = b[i];
-                tokens.push(Token { kind: TokenKind::Punctuation, start: i, end });
+                tokens.push(Token {
+                    kind: TokenKind::Punctuation,
+                    start: i,
+                    end,
+                });
                 prev_kind = Some(TokenKind::Punctuation);
                 i = end;
                 continue;
@@ -332,8 +556,14 @@ fn scan_js_regex(b: &[u8], pos: usize) -> Option<usize> {
     while i < b.len() {
         match b[i] {
             b'\\' => i += 2,
-            b'[' => { in_class = true; i += 1; }
-            b']' => { in_class = false; i += 1; }
+            b'[' => {
+                in_class = true;
+                i += 1;
+            }
+            b']' => {
+                in_class = false;
+                i += 1;
+            }
             b'/' if !in_class => {
                 i += 1;
                 // Consume flags
@@ -361,7 +591,10 @@ fn scan_template_literal(b: &[u8], pos: usize) -> usize {
                 depth += 1;
                 i += 2;
             }
-            b'{' if depth > 0 => { depth += 1; i += 1; }
+            b'{' if depth > 0 => {
+                depth += 1;
+                i += 1;
+            }
             b'}' if depth > 0 => {
                 depth -= 1;
                 i += 1;
@@ -379,12 +612,20 @@ mod tests {
     use crate::token::render;
 
     fn hl(code: &str) -> String {
-        let tokens = JsScanner { typescript: false, jsx: false }.scan(code);
+        let tokens = JsScanner {
+            typescript: false,
+            jsx: false,
+        }
+        .scan(code);
         render(code, &tokens)
     }
 
     fn hl_ts(code: &str) -> String {
-        let tokens = JsScanner { typescript: true, jsx: false }.scan(code);
+        let tokens = JsScanner {
+            typescript: true,
+            jsx: false,
+        }
+        .scan(code);
         render(code, &tokens)
     }
 
@@ -446,12 +687,20 @@ mod tests {
     }
 
     fn hl_jsx(code: &str) -> String {
-        let tokens = JsScanner { typescript: false, jsx: true }.scan(code);
+        let tokens = JsScanner {
+            typescript: false,
+            jsx: true,
+        }
+        .scan(code);
         render(code, &tokens)
     }
 
     fn hl_tsx(code: &str) -> String {
-        let tokens = JsScanner { typescript: true, jsx: true }.scan(code);
+        let tokens = JsScanner {
+            typescript: true,
+            jsx: true,
+        }
+        .scan(code);
         render(code, &tokens)
     }
 
