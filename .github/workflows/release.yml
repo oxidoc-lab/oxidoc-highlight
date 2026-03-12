@@ -1,0 +1,176 @@
+name: Release
+run-name: Release ${{ github.ref_name }}
+
+on:
+  push:
+    tags:
+      - "v*"
+
+concurrency:
+  group: release
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+env:
+  CARGO_TERM_COLOR: always
+
+jobs:
+  validate-version:
+    name: Validate Version Tag
+    runs-on: ubuntu-latest
+    outputs:
+      version: ${{ steps.version.outputs.version }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Rust
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Validate tag against Cargo.toml
+        id: version
+        run: |
+          TAG="${GITHUB_REF_NAME}"
+          TAG_VERSION="${TAG#v}"
+
+          CARGO_VERSION=$(cargo metadata --no-deps --format-version=1 \
+            | jq -r '.packages[] | select(.name == "oxidoc-highlight") | .version')
+
+          echo "Tag version: $TAG_VERSION"
+          echo "Cargo.toml version: $CARGO_VERSION"
+
+          if [[ ! "$TAG_VERSION" =~ ^([0-9]+\.[0-9]+\.[0-9]+)(-[a-zA-Z]+\.[0-9]+)?$ ]]; then
+            echo "::error::Invalid tag format '$TAG'. Expected: vX.Y.Z or vX.Y.Z-label.N"
+            exit 1
+          fi
+
+          TAG_BASE="${BASH_REMATCH[1]}"
+          CARGO_BASE=$(echo "$CARGO_VERSION" | grep -oP '^\d+\.\d+\.\d+')
+
+          if [[ "$TAG_BASE" != "$CARGO_BASE" ]]; then
+            echo "::error::Base version mismatch! Tag '$TAG_BASE' != Cargo.toml '$CARGO_BASE'"
+            exit 1
+          fi
+
+          echo "version=$TAG_VERSION" >> $GITHUB_OUTPUT
+
+  ci:
+    name: CI
+    needs: validate-version
+    uses: ./.github/workflows/ci.yml
+
+  publish-crates:
+    name: Publish to crates.io
+    needs: [validate-version, ci]
+    runs-on: ubuntu-latest
+    environment: crates-io
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Rust
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Set version from tag
+        run: |
+          VERSION="${{ needs.validate-version.outputs.version }}"
+          CURRENT=$(cargo metadata --no-deps --format-version=1 | jq -r '.packages[] | select(.name == "oxidoc-highlight") | .version')
+          if [[ "$VERSION" != "$CURRENT" ]]; then
+            sed -i "0,/^version = \".*\"/s//version = \"$VERSION\"/" Cargo.toml
+            echo "Updated version: $CURRENT -> $VERSION"
+          else
+            echo "Version already matches, no change needed"
+          fi
+
+      - name: Publish to crates.io
+        run: |
+          VERSION="${{ needs.validate-version.outputs.version }}"
+
+          is_published() {
+            cargo search "$1" --limit 1 2>/dev/null | grep -q "\"$2\""
+          }
+
+          if is_published "oxidoc-highlight" "$VERSION"; then
+            echo "oxidoc-highlight@$VERSION already published — skipping"
+          else
+            echo "Publishing oxidoc-highlight@$VERSION..."
+            cargo publish --allow-dirty --no-verify
+          fi
+        env:
+          CARGO_REGISTRY_TOKEN: ${{ secrets.CARGO_REGISTRY_TOKEN }}
+
+  publish-npm:
+    name: Publish npm package
+    needs: [validate-version, publish-crates]
+    runs-on: ubuntu-latest
+    environment: npm
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Rust
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Install wasm-pack
+        run: curl https://rustwasm.github.io/wasm-pack/installer/init.sh -sSf | sh
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          registry-url: "https://registry.npmjs.org"
+
+      - name: Update npm for OIDC support
+        run: npm install -g npm@latest
+
+      - name: Build wasm package
+        run: wasm-pack build --release --target web --scope oxidoc -- --features wasm
+
+      - name: Sync npm package version from tag
+        run: |
+          VERSION="${{ needs.validate-version.outputs.version }}"
+          jq --arg v "$VERSION" '.version = $v' pkg/package.json > tmp.json && mv tmp.json pkg/package.json
+          echo "Set pkg/package.json version to $VERSION"
+
+      - name: Publish @oxidoc/highlight
+        working-directory: pkg
+        run: |
+          VERSION=$(jq -r '.version' package.json)
+          if npm view @oxidoc/highlight@$VERSION version 2>/dev/null; then
+            echo "@oxidoc/highlight@$VERSION already published — skipping"
+          else
+            TAG_FLAG=""
+            if [[ "$VERSION" == *-* ]]; then
+              PRERELEASE="${VERSION#*-}"
+              TAG_FLAG="--tag ${PRERELEASE%%.*}"
+            fi
+            npm publish --access public --provenance $TAG_FLAG
+          fi
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+
+  github-release:
+    name: Create GitHub Release
+    needs: [validate-version, publish-crates]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Create release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          VERSION="${{ needs.validate-version.outputs.version }}"
+          TAG="${GITHUB_REF_NAME}"
+          PRERELEASE=""
+          if [[ "$VERSION" == *-* ]]; then
+            PRERELEASE="--prerelease"
+          fi
+          gh release create "$TAG" \
+            --title "v${VERSION}" \
+            --generate-notes \
+            $PRERELEASE
