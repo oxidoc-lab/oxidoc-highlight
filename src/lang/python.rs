@@ -143,17 +143,17 @@ impl Scanner for PythonScanner {
             }
 
             // Comments
-            if c == b'#' {
-                if let Some(end) = scan_hash_comment(b, i) {
-                    tokens.push(Token {
-                        kind: TokenKind::Comment,
-                        start: i,
-                        end,
-                    });
-                    prev_kind = Some(TokenKind::Comment);
-                    i = end;
-                    continue;
-                }
+            if c == b'#'
+                && let Some(end) = scan_hash_comment(b, i)
+            {
+                tokens.push(Token {
+                    kind: TokenKind::Comment,
+                    start: i,
+                    end,
+                });
+                prev_kind = Some(TokenKind::Comment);
+                i = end;
+                continue;
             }
 
             // Decorators
@@ -234,29 +234,29 @@ impl Scanner for PythonScanner {
             }
 
             // Regular strings
-            if c == b'"' {
-                if let Some(end) = scan_double_string(b, i) {
-                    tokens.push(Token {
-                        kind: TokenKind::String,
-                        start: i,
-                        end,
-                    });
-                    prev_kind = Some(TokenKind::String);
-                    i = end;
-                    continue;
-                }
+            if c == b'"'
+                && let Some(end) = scan_double_string(b, i)
+            {
+                tokens.push(Token {
+                    kind: TokenKind::String,
+                    start: i,
+                    end,
+                });
+                prev_kind = Some(TokenKind::String);
+                i = end;
+                continue;
             }
-            if c == b'\'' {
-                if let Some(end) = scan_single_string(b, i) {
-                    tokens.push(Token {
-                        kind: TokenKind::String,
-                        start: i,
-                        end,
-                    });
-                    prev_kind = Some(TokenKind::String);
-                    i = end;
-                    continue;
-                }
+            if c == b'\''
+                && let Some(end) = scan_single_string(b, i)
+            {
+                tokens.push(Token {
+                    kind: TokenKind::String,
+                    start: i,
+                    end,
+                });
+                prev_kind = Some(TokenKind::String);
+                i = end;
+                continue;
             }
 
             // Numbers
@@ -277,12 +277,10 @@ impl Scanner for PythonScanner {
                     TokenKind::Keyword
                 } else if ident == b"self" || ident == b"cls" {
                     TokenKind::Variable
-                } else if is_keyword(ident, TYPE_NAMES) && !is_function_call(b, end) {
+                } else if (is_keyword(ident, TYPE_NAMES) && !is_function_call(b, end))
+                    || is_pascal_case(ident)
+                {
                     TokenKind::Type
-                } else if is_pascal_case(ident) {
-                    TokenKind::Type
-                } else if is_keyword(ident, BUILTINS) && is_function_call(b, end) {
-                    TokenKind::Builtin
                 } else if is_keyword(ident, BUILTINS) {
                     TokenKind::Builtin
                 } else if is_function_call(b, end) {

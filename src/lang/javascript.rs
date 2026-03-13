@@ -175,17 +175,16 @@ impl Scanner for JsScanner {
                 && slash_is_regex(prev_kind, prev_punct_byte)
                 && at(b, i + 1) != b'/'
                 && at(b, i + 1) != b'*'
+                && let Some(end) = scan_js_regex(b, i)
             {
-                if let Some(end) = scan_js_regex(b, i) {
-                    tokens.push(Token {
-                        kind: TokenKind::String,
-                        start: i,
-                        end,
-                    });
-                    prev_kind = Some(TokenKind::String);
-                    i = end;
-                    continue;
-                }
+                tokens.push(Token {
+                    kind: TokenKind::String,
+                    start: i,
+                    end,
+                });
+                prev_kind = Some(TokenKind::String);
+                i = end;
+                continue;
             }
 
             // Template literals
@@ -202,29 +201,29 @@ impl Scanner for JsScanner {
             }
 
             // Strings
-            if c == b'"' {
-                if let Some(end) = scan_double_string(b, i) {
-                    tokens.push(Token {
-                        kind: TokenKind::String,
-                        start: i,
-                        end,
-                    });
-                    prev_kind = Some(TokenKind::String);
-                    i = end;
-                    continue;
-                }
+            if c == b'"'
+                && let Some(end) = scan_double_string(b, i)
+            {
+                tokens.push(Token {
+                    kind: TokenKind::String,
+                    start: i,
+                    end,
+                });
+                prev_kind = Some(TokenKind::String);
+                i = end;
+                continue;
             }
-            if c == b'\'' {
-                if let Some(end) = scan_single_string(b, i) {
-                    tokens.push(Token {
-                        kind: TokenKind::String,
-                        start: i,
-                        end,
-                    });
-                    prev_kind = Some(TokenKind::String);
-                    i = end;
-                    continue;
-                }
+            if c == b'\''
+                && let Some(end) = scan_single_string(b, i)
+            {
+                tokens.push(Token {
+                    kind: TokenKind::String,
+                    start: i,
+                    end,
+                });
+                prev_kind = Some(TokenKind::String);
+                i = end;
+                continue;
             }
 
             // Decorators (TS)

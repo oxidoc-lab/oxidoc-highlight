@@ -169,17 +169,18 @@ impl Scanner for RustScanner {
             }
 
             // Raw strings: r"...", r#"..."#, r##"..."##, etc.
-            if c == b'r' && (at(b, i + 1) == b'"' || at(b, i + 1) == b'#') {
-                if let Some(end) = scan_rust_raw_string(b, i) {
-                    tokens.push(Token {
-                        kind: TokenKind::String,
-                        start: i,
-                        end,
-                    });
-                    prev_kind = Some(TokenKind::String);
-                    i = end;
-                    continue;
-                }
+            if c == b'r'
+                && (at(b, i + 1) == b'"' || at(b, i + 1) == b'#')
+                && let Some(end) = scan_rust_raw_string(b, i)
+            {
+                tokens.push(Token {
+                    kind: TokenKind::String,
+                    start: i,
+                    end,
+                });
+                prev_kind = Some(TokenKind::String);
+                i = end;
+                continue;
             }
 
             // Byte strings: b"...", b'...'
@@ -198,17 +199,17 @@ impl Scanner for RustScanner {
             }
 
             // Strings
-            if c == b'"' {
-                if let Some(end) = scan_double_string(b, i) {
-                    tokens.push(Token {
-                        kind: TokenKind::String,
-                        start: i,
-                        end,
-                    });
-                    prev_kind = Some(TokenKind::String);
-                    i = end;
-                    continue;
-                }
+            if c == b'"'
+                && let Some(end) = scan_double_string(b, i)
+            {
+                tokens.push(Token {
+                    kind: TokenKind::String,
+                    start: i,
+                    end,
+                });
+                prev_kind = Some(TokenKind::String);
+                i = end;
+                continue;
             }
 
             // Char literals

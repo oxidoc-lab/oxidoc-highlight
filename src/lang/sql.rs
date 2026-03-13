@@ -259,16 +259,17 @@ impl Scanner for SqlScanner {
             }
 
             // Line comments --
-            if c == b'-' && at(b, i + 1) == b'-' {
-                if let Some(end) = scan_line_comment(b, i, b"--") {
-                    tokens.push(Token {
-                        kind: TokenKind::Comment,
-                        start: i,
-                        end,
-                    });
-                    i = end;
-                    continue;
-                }
+            if c == b'-'
+                && at(b, i + 1) == b'-'
+                && let Some(end) = scan_line_comment(b, i, b"--")
+            {
+                tokens.push(Token {
+                    kind: TokenKind::Comment,
+                    start: i,
+                    end,
+                });
+                i = end;
+                continue;
             }
             if let Some(end) = scan_block_comment(b, i) {
                 tokens.push(Token {
@@ -280,27 +281,27 @@ impl Scanner for SqlScanner {
                 continue;
             }
 
-            if c == b'\'' {
-                if let Some(end) = scan_single_string(b, i) {
-                    tokens.push(Token {
-                        kind: TokenKind::String,
-                        start: i,
-                        end,
-                    });
-                    i = end;
-                    continue;
-                }
+            if c == b'\''
+                && let Some(end) = scan_single_string(b, i)
+            {
+                tokens.push(Token {
+                    kind: TokenKind::String,
+                    start: i,
+                    end,
+                });
+                i = end;
+                continue;
             }
-            if c == b'"' {
-                if let Some(end) = scan_double_string(b, i) {
-                    tokens.push(Token {
-                        kind: TokenKind::String,
-                        start: i,
-                        end,
-                    });
-                    i = end;
-                    continue;
-                }
+            if c == b'"'
+                && let Some(end) = scan_double_string(b, i)
+            {
+                tokens.push(Token {
+                    kind: TokenKind::String,
+                    start: i,
+                    end,
+                });
+                i = end;
+                continue;
             }
 
             if let Some(end) = scan_number(b, i) {

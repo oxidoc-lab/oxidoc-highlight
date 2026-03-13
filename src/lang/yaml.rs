@@ -41,42 +41,42 @@ impl Scanner for YamlScanner {
             }
 
             // Comments
-            if c == b'#' {
-                if let Some(end) = scan_hash_comment(b, i) {
-                    tokens.push(Token {
-                        kind: TokenKind::Comment,
-                        start: i,
-                        end,
-                    });
-                    i = end;
-                    continue;
-                }
+            if c == b'#'
+                && let Some(end) = scan_hash_comment(b, i)
+            {
+                tokens.push(Token {
+                    kind: TokenKind::Comment,
+                    start: i,
+                    end,
+                });
+                i = end;
+                continue;
             }
 
             // Strings
-            if c == b'"' {
-                if let Some(end) = scan_double_string(b, i) {
-                    tokens.push(Token {
-                        kind: TokenKind::String,
-                        start: i,
-                        end,
-                    });
-                    i = end;
-                    line_start = false;
-                    continue;
-                }
+            if c == b'"'
+                && let Some(end) = scan_double_string(b, i)
+            {
+                tokens.push(Token {
+                    kind: TokenKind::String,
+                    start: i,
+                    end,
+                });
+                i = end;
+                line_start = false;
+                continue;
             }
-            if c == b'\'' {
-                if let Some(end) = scan_single_string(b, i) {
-                    tokens.push(Token {
-                        kind: TokenKind::String,
-                        start: i,
-                        end,
-                    });
-                    i = end;
-                    line_start = false;
-                    continue;
-                }
+            if c == b'\''
+                && let Some(end) = scan_single_string(b, i)
+            {
+                tokens.push(Token {
+                    kind: TokenKind::String,
+                    start: i,
+                    end,
+                });
+                i = end;
+                line_start = false;
+                continue;
             }
 
             // Key: value pattern — scan identifier then check for :

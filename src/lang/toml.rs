@@ -28,16 +28,16 @@ impl Scanner for TomlScanner {
             }
 
             // Comments
-            if c == b'#' {
-                if let Some(end) = scan_hash_comment(b, i) {
-                    tokens.push(Token {
-                        kind: TokenKind::Comment,
-                        start: i,
-                        end,
-                    });
-                    i = end;
-                    continue;
-                }
+            if c == b'#'
+                && let Some(end) = scan_hash_comment(b, i)
+            {
+                tokens.push(Token {
+                    kind: TokenKind::Comment,
+                    start: i,
+                    end,
+                });
+                i = end;
+                continue;
             }
 
             // Section headers [section] or [[array]]
@@ -99,27 +99,27 @@ impl Scanner for TomlScanner {
             }
 
             // Strings
-            if c == b'"' {
-                if let Some(end) = scan_double_string(b, i) {
-                    tokens.push(Token {
-                        kind: TokenKind::String,
-                        start: i,
-                        end,
-                    });
-                    i = end;
-                    continue;
-                }
+            if c == b'"'
+                && let Some(end) = scan_double_string(b, i)
+            {
+                tokens.push(Token {
+                    kind: TokenKind::String,
+                    start: i,
+                    end,
+                });
+                i = end;
+                continue;
             }
-            if c == b'\'' {
-                if let Some(end) = scan_single_string(b, i) {
-                    tokens.push(Token {
-                        kind: TokenKind::String,
-                        start: i,
-                        end,
-                    });
-                    i = end;
-                    continue;
-                }
+            if c == b'\''
+                && let Some(end) = scan_single_string(b, i)
+            {
+                tokens.push(Token {
+                    kind: TokenKind::String,
+                    start: i,
+                    end,
+                });
+                i = end;
+                continue;
             }
 
             // Numbers

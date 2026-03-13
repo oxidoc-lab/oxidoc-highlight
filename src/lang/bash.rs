@@ -88,30 +88,32 @@ impl Scanner for BashScanner {
             // Comments
             if c == b'#' {
                 // But not $# or ${#...}
-                if i == 0 || !matches!(at(b, i - 1), b'$' | b'{') {
-                    if let Some(end) = scan_hash_comment(b, i) {
-                        tokens.push(Token {
-                            kind: TokenKind::Comment,
-                            start: i,
-                            end,
-                        });
-                        i = end;
-                        continue;
-                    }
-                }
-            }
-
-            // Heredoc (basic: <<EOF ... EOF)
-            if c == b'<' && at(b, i + 1) == b'<' && at(b, i + 2) != b'<' {
-                if let Some(end) = scan_heredoc(b, i) {
+                if (i == 0 || !matches!(at(b, i - 1), b'$' | b'{'))
+                    && let Some(end) = scan_hash_comment(b, i)
+                {
                     tokens.push(Token {
-                        kind: TokenKind::String,
+                        kind: TokenKind::Comment,
                         start: i,
                         end,
                     });
                     i = end;
                     continue;
                 }
+            }
+
+            // Heredoc (basic: <<EOF ... EOF)
+            if c == b'<'
+                && at(b, i + 1) == b'<'
+                && at(b, i + 2) != b'<'
+                && let Some(end) = scan_heredoc(b, i)
+            {
+                tokens.push(Token {
+                    kind: TokenKind::String,
+                    start: i,
+                    end,
+                });
+                i = end;
+                continue;
             }
 
             // Strings
@@ -125,16 +127,16 @@ impl Scanner for BashScanner {
                 i = end;
                 continue;
             }
-            if c == b'\'' {
-                if let Some(end) = scan_single_string(b, i) {
-                    tokens.push(Token {
-                        kind: TokenKind::String,
-                        start: i,
-                        end,
-                    });
-                    i = end;
-                    continue;
-                }
+            if c == b'\''
+                && let Some(end) = scan_single_string(b, i)
+            {
+                tokens.push(Token {
+                    kind: TokenKind::String,
+                    start: i,
+                    end,
+                });
+                i = end;
+                continue;
             }
 
             // Variables: $VAR, ${VAR}, $(...), $((...))
@@ -202,16 +204,17 @@ impl Scanner for BashScanner {
             }
 
             // Numbers (only at word boundary)
-            if c.is_ascii_digit() && (i == 0 || !at(b, i - 1).is_ascii_alphanumeric()) {
-                if let Some(end) = scan_number(b, i) {
-                    tokens.push(Token {
-                        kind: TokenKind::Number,
-                        start: i,
-                        end,
-                    });
-                    i = end;
-                    continue;
-                }
+            if c.is_ascii_digit()
+                && (i == 0 || !at(b, i - 1).is_ascii_alphanumeric())
+                && let Some(end) = scan_number(b, i)
+            {
+                tokens.push(Token {
+                    kind: TokenKind::Number,
+                    start: i,
+                    end,
+                });
+                i = end;
+                continue;
             }
 
             // Identifiers / keywords

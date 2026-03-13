@@ -33,23 +33,23 @@ impl Scanner for JsonScanner {
             }
 
             // Strings (keys vs values determined by context: key if followed by :)
-            if c == b'"' {
-                if let Some(end) = scan_double_string(b, i) {
-                    // Check if this is a key (followed by :)
-                    let after = skip_whitespace_no_newline(b, end);
-                    let kind = if at(b, after) == b':' {
-                        TokenKind::Property
-                    } else {
-                        TokenKind::String
-                    };
-                    tokens.push(Token {
-                        kind,
-                        start: i,
-                        end,
-                    });
-                    i = end;
-                    continue;
-                }
+            if c == b'"'
+                && let Some(end) = scan_double_string(b, i)
+            {
+                // Check if this is a key (followed by :)
+                let after = skip_whitespace_no_newline(b, end);
+                let kind = if at(b, after) == b':' {
+                    TokenKind::Property
+                } else {
+                    TokenKind::String
+                };
+                tokens.push(Token {
+                    kind,
+                    start: i,
+                    end,
+                });
+                i = end;
+                continue;
             }
 
             // Numbers

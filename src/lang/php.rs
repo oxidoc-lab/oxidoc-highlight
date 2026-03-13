@@ -283,43 +283,43 @@ impl Scanner for PhpScanner {
             }
 
             // Heredoc/nowdoc
-            if b[i..].starts_with(b"<<<") {
-                if let Some(end) = scan_php_heredoc(b, i) {
-                    tokens.push(Token {
-                        kind: TokenKind::String,
-                        start: i,
-                        end,
-                    });
-                    prev_kind = Some(TokenKind::String);
-                    i = end;
-                    continue;
-                }
+            if b[i..].starts_with(b"<<<")
+                && let Some(end) = scan_php_heredoc(b, i)
+            {
+                tokens.push(Token {
+                    kind: TokenKind::String,
+                    start: i,
+                    end,
+                });
+                prev_kind = Some(TokenKind::String);
+                i = end;
+                continue;
             }
 
             // Strings
-            if c == b'"' {
-                if let Some(end) = scan_double_string(b, i) {
-                    tokens.push(Token {
-                        kind: TokenKind::String,
-                        start: i,
-                        end,
-                    });
-                    prev_kind = Some(TokenKind::String);
-                    i = end;
-                    continue;
-                }
+            if c == b'"'
+                && let Some(end) = scan_double_string(b, i)
+            {
+                tokens.push(Token {
+                    kind: TokenKind::String,
+                    start: i,
+                    end,
+                });
+                prev_kind = Some(TokenKind::String);
+                i = end;
+                continue;
             }
-            if c == b'\'' {
-                if let Some(end) = scan_single_string(b, i) {
-                    tokens.push(Token {
-                        kind: TokenKind::String,
-                        start: i,
-                        end,
-                    });
-                    prev_kind = Some(TokenKind::String);
-                    i = end;
-                    continue;
-                }
+            if c == b'\''
+                && let Some(end) = scan_single_string(b, i)
+            {
+                tokens.push(Token {
+                    kind: TokenKind::String,
+                    start: i,
+                    end,
+                });
+                prev_kind = Some(TokenKind::String);
+                i = end;
+                continue;
             }
 
             // Variables: $name, $$name
@@ -333,18 +333,12 @@ impl Scanner for PhpScanner {
                     while i < b.len() && (b[i].is_ascii_alphanumeric() || b[i] == b'_') {
                         i += 1;
                     }
-                    let var_name = &b[start..i];
-                    let kind = if var_name == b"$this" {
-                        TokenKind::Variable
-                    } else {
-                        TokenKind::Variable
-                    };
                     tokens.push(Token {
-                        kind,
+                        kind: TokenKind::Variable,
                         start,
                         end: i,
                     });
-                    prev_kind = Some(kind);
+                    prev_kind = Some(TokenKind::Variable);
                     continue;
                 }
                 // Lone $

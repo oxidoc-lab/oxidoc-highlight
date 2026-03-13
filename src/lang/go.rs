@@ -87,41 +87,41 @@ impl Scanner for GoScanner {
                 i = end;
                 continue;
             }
-            if c == b'"' {
-                if let Some(end) = scan_double_string(b, i) {
-                    tokens.push(Token {
-                        kind: TokenKind::String,
-                        start: i,
-                        end,
-                    });
-                    prev_kind = Some(TokenKind::String);
-                    i = end;
-                    continue;
-                }
+            if c == b'"'
+                && let Some(end) = scan_double_string(b, i)
+            {
+                tokens.push(Token {
+                    kind: TokenKind::String,
+                    start: i,
+                    end,
+                });
+                prev_kind = Some(TokenKind::String);
+                i = end;
+                continue;
             }
-            if c == b'\'' {
-                if let Some(end) = scan_single_string(b, i) {
-                    tokens.push(Token {
-                        kind: TokenKind::String,
-                        start: i,
-                        end,
-                    });
-                    prev_kind = Some(TokenKind::String);
-                    i = end;
-                    continue;
-                }
+            if c == b'\''
+                && let Some(end) = scan_single_string(b, i)
+            {
+                tokens.push(Token {
+                    kind: TokenKind::String,
+                    start: i,
+                    end,
+                });
+                prev_kind = Some(TokenKind::String);
+                i = end;
+                continue;
             }
-            if c == b'`' {
-                if let Some(end) = scan_backtick_string(b, i) {
-                    tokens.push(Token {
-                        kind: TokenKind::String,
-                        start: i,
-                        end,
-                    });
-                    prev_kind = Some(TokenKind::String);
-                    i = end;
-                    continue;
-                }
+            if c == b'`'
+                && let Some(end) = scan_backtick_string(b, i)
+            {
+                tokens.push(Token {
+                    kind: TokenKind::String,
+                    start: i,
+                    end,
+                });
+                prev_kind = Some(TokenKind::String);
+                i = end;
+                continue;
             }
 
             if let Some(end) = scan_number(b, i) {

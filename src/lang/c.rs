@@ -178,29 +178,29 @@ impl Scanner for CScanner {
                 i = end;
                 continue;
             }
-            if c == b'"' {
-                if let Some(end) = scan_double_string(b, i) {
-                    tokens.push(Token {
-                        kind: TokenKind::String,
-                        start: i,
-                        end,
-                    });
-                    prev_kind = Some(TokenKind::String);
-                    i = end;
-                    continue;
-                }
+            if c == b'"'
+                && let Some(end) = scan_double_string(b, i)
+            {
+                tokens.push(Token {
+                    kind: TokenKind::String,
+                    start: i,
+                    end,
+                });
+                prev_kind = Some(TokenKind::String);
+                i = end;
+                continue;
             }
-            if c == b'\'' {
-                if let Some(end) = scan_single_string(b, i) {
-                    tokens.push(Token {
-                        kind: TokenKind::String,
-                        start: i,
-                        end,
-                    });
-                    prev_kind = Some(TokenKind::String);
-                    i = end;
-                    continue;
-                }
+            if c == b'\''
+                && let Some(end) = scan_single_string(b, i)
+            {
+                tokens.push(Token {
+                    kind: TokenKind::String,
+                    start: i,
+                    end,
+                });
+                prev_kind = Some(TokenKind::String);
+                i = end;
+                continue;
             }
 
             if let Some(end) = scan_number(b, i) {
@@ -221,9 +221,7 @@ impl Scanner for CScanner {
                     TokenKind::Keyword
                 } else if ident == b"this" && self.cpp {
                     TokenKind::Variable
-                } else if is_keyword(ident, TYPES) {
-                    TokenKind::Type
-                } else if is_pascal_case(ident) {
+                } else if is_keyword(ident, TYPES) || is_pascal_case(ident) {
                     TokenKind::Type
                 } else if is_function_call(b, end) && !was_keyword(prev_kind) {
                     TokenKind::Function

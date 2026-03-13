@@ -34,27 +34,27 @@ impl Scanner for CssScanner {
             }
 
             // Strings
-            if c == b'"' {
-                if let Some(end) = scan_double_string(b, i) {
-                    tokens.push(Token {
-                        kind: TokenKind::String,
-                        start: i,
-                        end,
-                    });
-                    i = end;
-                    continue;
-                }
+            if c == b'"'
+                && let Some(end) = scan_double_string(b, i)
+            {
+                tokens.push(Token {
+                    kind: TokenKind::String,
+                    start: i,
+                    end,
+                });
+                i = end;
+                continue;
             }
-            if c == b'\'' {
-                if let Some(end) = scan_single_string(b, i) {
-                    tokens.push(Token {
-                        kind: TokenKind::String,
-                        start: i,
-                        end,
-                    });
-                    i = end;
-                    continue;
-                }
+            if c == b'\''
+                && let Some(end) = scan_single_string(b, i)
+            {
+                tokens.push(Token {
+                    kind: TokenKind::String,
+                    start: i,
+                    end,
+                });
+                i = end;
+                continue;
             }
 
             // @ rules
@@ -132,21 +132,21 @@ impl Scanner for CssScanner {
                 }
 
                 // Numbers with units
-                if c.is_ascii_digit() || (c == b'.' && at(b, i + 1).is_ascii_digit()) {
-                    if let Some(end) = scan_number(b, i) {
-                        let mut e = end;
-                        // Consume CSS units
-                        while e < b.len() && (b[e].is_ascii_alphabetic() || b[e] == b'%') {
-                            e += 1;
-                        }
-                        tokens.push(Token {
-                            kind: TokenKind::Number,
-                            start: i,
-                            end: e,
-                        });
-                        i = e;
-                        continue;
+                if (c.is_ascii_digit() || (c == b'.' && at(b, i + 1).is_ascii_digit()))
+                    && let Some(end) = scan_number(b, i)
+                {
+                    let mut e = end;
+                    // Consume CSS units
+                    while e < b.len() && (b[e].is_ascii_alphabetic() || b[e] == b'%') {
+                        e += 1;
                     }
+                    tokens.push(Token {
+                        kind: TokenKind::Number,
+                        start: i,
+                        end: e,
+                    });
+                    i = e;
+                    continue;
                 }
 
                 // Hash colors
