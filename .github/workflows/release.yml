@@ -128,11 +128,11 @@ jobs:
       - name: Build wasm package
         run: wasm-pack build --release --target web --scope oxidoc -- --features wasm
 
-      - name: Sync npm package version from tag
+      - name: Sync npm package name and version from tag
         run: |
           VERSION="${{ needs.validate-version.outputs.version }}"
-          jq --arg v "$VERSION" '.version = $v' pkg/package.json > tmp.json && mv tmp.json pkg/package.json
-          echo "Set pkg/package.json version to $VERSION"
+          jq --arg v "$VERSION" '.name = "@oxidoc/highlight" | .version = $v' pkg/package.json > tmp.json && mv tmp.json pkg/package.json
+          echo "Set pkg/package.json: @oxidoc/highlight@$VERSION"
 
       - name: Publish @oxidoc/highlight
         working-directory: pkg
