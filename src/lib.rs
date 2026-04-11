@@ -5,6 +5,13 @@ pub mod token;
 
 use token::render;
 
+/// Tokenize `code` in the given language, returning structured tokens with byte ranges.
+///
+/// Unknown languages return an empty token list. Use [`highlight`] for HTML output instead.
+pub fn scan(code: &str, language: &str) -> Vec<token::Token> {
+    lang::scan(code, language)
+}
+
 /// Highlight `code` in the given language, returning HTML with `<span class="tok-*">` tokens.
 ///
 /// Unknown languages return HTML-escaped plain text (no spans).
