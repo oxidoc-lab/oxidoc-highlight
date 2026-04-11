@@ -1,6 +1,6 @@
 [package]
 name = "oxidoc-highlight"
-version = "0.1.0"
+version = "0.1.1"
 edition = "2024"
 license = "MIT OR Apache-2.0"
 description = "Lightweight syntax highlighting for documentation engines"
@@ -8,7 +8,13 @@ repository = "https://github.com/oxidoc-lab/oxidoc-highlight"
 homepage = "https://github.com/oxidoc-lab/oxidoc-highlight"
 documentation = "https://docs.rs/oxidoc-highlight"
 readme = "README.md"
-keywords = ["syntax-highlighting", "highlighter", "code", "wasm", "documentation"]
+keywords = [
+  "syntax-highlighting",
+  "highlighter",
+  "code",
+  "wasm",
+  "documentation",
+]
 categories = ["text-processing", "wasm", "web-programming"]
 
 [lib]
